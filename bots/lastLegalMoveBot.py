@@ -1,11 +1,10 @@
 import random
 
 def getName():
-    return "Random Move Bot"
+    return "Last Legal Move Bot"
 
 def findMove(board):
     numLegalMoves = board.legal_moves.count()
-    idx = random.randint(0, numLegalMoves)
     legal_moves = list(board.legal_moves)
-    move = legal_moves[idx-1]
+    move = legal_moves[numLegalMoves-1]
     return move
