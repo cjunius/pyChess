@@ -2,8 +2,6 @@ import chess
 import chess.polyglot
 import time
 
-depth = 4
-
 pawntable = [
     0, 0, 0, 0, 0, 0, 0, 0,
     5, 10, 10, -20, -20, 10, 10, 5,
@@ -64,28 +62,41 @@ kingstable = [
     -30, -40, -40, -50, -50, -40, -40, -30,
     -30, -40, -40, -50, -50, -40, -40, -30]
 
-known_evaluations = {}
+evaluations = 0
 
 def getName():
-    return "CJ Bot v0.2 - Depth 4"
+    return "CJ Bot"
 
 def findMove(board: chess.Board):
+    if board.ply() % 2 == 0:
+        output = "White "
+    else:
+        output = "Black "
+    
     try:
         with chess.polyglot.open_reader("bots/books/bookfish.bin") as reader:
             move = reader.weighted_choice(board).move
-            print("Book move: " + str(board.san(move)))
+            output += "Book move: " + str(board.san(move))
+            print(output)
             return move
-    except Exception as e:
+    except:
+            
+        global evaluations
+        evaluations = 0
+
         startTime = time.time()
         bestMove = chess.Move.null()
         bestValue = -99999
         alpha = -100000
         beta = 100000
 
-        legal_moves = list(board.legal_moves)
-        legal_moves.sort(key=lambda x: (board.is_capture(x), board.gives_check(x) ) )
+        numPieces = len(board.piece_map())
 
-        for move in legal_moves:
+        depth = 3 #+ (16-wp-bp)//16 + (8-wn-bn-wb-bb)//8 + (4-wr-br)//4 + (2-wq-bq)//2
+
+        num_legal_moves = 0
+        for move in board.legal_moves:
+            num_legal_moves += 1
             board.push(move)
             boardValue = -alphabeta(-beta, -alpha, depth - 1, board)
             if boardValue > bestValue:
@@ -96,13 +107,24 @@ def findMove(board: chess.Board):
             board.pop()
         endTime = time.time()
         diff = endTime - startTime
-        print("Move: " + str(board.san(bestMove)) + "\tEvaluation: " + str(bestValue) + "\tTime: " + str(diff))
+        
+        output += "{:2}. {:7} Eval: {:5} ".format(board.fullmove_number, board.san(bestMove), bestValue)
+        output += "\tMoves: {}".format(num_legal_moves)
+        output += "\tPieces: {}".format(numPieces)
+        output += "\tDepth: {}".format(depth)
+        output += "\tEvals: {:8}".format(evaluations)
+        output += "\tTime: {:6.4f}s".format(diff)
+        output += "\tEvals/Time: {:6.4f}".format(evaluations/diff)
+        print(output)
+        
         return bestMove
 
 def alphabeta(alpha, beta, depthleft, board):
     bestscore = -9999
+
     if (depthleft == 0):
         return quiesce(alpha, beta, board)
+    
     for move in board.legal_moves:
         board.push(move)
         score = -alphabeta(-beta, -alpha, depthleft - 1, board)
@@ -134,7 +156,11 @@ def quiesce(alpha, beta, board):
                 alpha = score
     return alpha
 
-def evaluate_board(board):
+def evaluate_board(board: chess.Board):
+
+    global evaluations
+
+    evaluations += 1 
     if board.is_checkmate():
         if board.turn:
             return -9999
@@ -144,42 +170,115 @@ def evaluate_board(board):
         return 0
     if board.is_insufficient_material():
         return 0
+    
+    if evaluations > 350000:
+        return 0
 
-    wp = len(board.pieces(chess.PAWN, chess.WHITE))
-    bp = len(board.pieces(chess.PAWN, chess.BLACK))
-    wn = len(board.pieces(chess.KNIGHT, chess.WHITE))
-    bn = len(board.pieces(chess.KNIGHT, chess.BLACK))
-    wb = len(board.pieces(chess.BISHOP, chess.WHITE))
-    bb = len(board.pieces(chess.BISHOP, chess.BLACK))
-    wr = len(board.pieces(chess.ROOK, chess.WHITE))
-    br = len(board.pieces(chess.ROOK, chess.BLACK))
-    wq = len(board.pieces(chess.QUEEN, chess.WHITE))
-    bq = len(board.pieces(chess.QUEEN, chess.BLACK))
+    #eval = _eval_material(board)
+    eval = _eval_attacks(board)
+    #eval += _eval_piece_heatmap(board)
+    
+    #eval += _eval_attackers(board)
 
-    material = 100 * (wp - bp) + 320 * (wn - bn) + 330 * (wb - bb) + 500 * (wr - br) + 900 * (wq - bq)
+    # ToDo: Evaluate Mobility and Board Control??
+    # ToDo: Evaluate Development??
+    #eval += _eval_square_attacks(board)*3
+    
+    # ToDo: Evaludate King Safety
+    #eval += _eval_king_safety(board)
+    
 
-    pawnsq = sum([pawntable[i] for i in board.pieces(chess.PAWN, chess.WHITE)])
-    pawnsq = pawnsq + sum([-pawntable[chess.square_mirror(i)]
-                           for i in board.pieces(chess.PAWN, chess.BLACK)])
-    knightsq = sum([knightstable[i] for i in board.pieces(chess.KNIGHT, chess.WHITE)])
-    knightsq = knightsq + sum([-knightstable[chess.square_mirror(i)]
-                               for i in board.pieces(chess.KNIGHT, chess.BLACK)])
-    bishopsq = sum([bishopstable[i] for i in board.pieces(chess.BISHOP, chess.WHITE)])
-    bishopsq = bishopsq + sum([-bishopstable[chess.square_mirror(i)]
-                               for i in board.pieces(chess.BISHOP, chess.BLACK)])
-    rooksq = sum([rookstable[i] for i in board.pieces(chess.ROOK, chess.WHITE)])
-    rooksq = rooksq + sum([-rookstable[chess.square_mirror(i)]
-                           for i in board.pieces(chess.ROOK, chess.BLACK)])
-    queensq = sum([queenstable[i] for i in board.pieces(chess.QUEEN, chess.WHITE)])
-    queensq = queensq + sum([-queenstable[chess.square_mirror(i)]
-                             for i in board.pieces(chess.QUEEN, chess.BLACK)])
-    kingsq = sum([kingstable[i] for i in board.pieces(chess.KING, chess.WHITE)])
-    kingsq = kingsq + sum([-kingstable[chess.square_mirror(i)]
-                           for i in board.pieces(chess.KING, chess.BLACK)])
+    # ToDo: Evaluate Pawn Formations: doubled pawns, Opposing Pawns blocking each other, Passed Pawns, Isolated Pawns
 
-    eval = material + pawnsq + knightsq + bishopsq + rooksq + queensq + kingsq
+    # ToDo: Evaluate # of Open Files and Control of Files    
+
+    # ToDo: Balance evaluation time with depth
+
     if board.turn:
         return eval
     else:
         return -eval
+    
+def _eval_material(board):
+    piece_values = [100, 280, 320, 379, 929, 0]
+    eval = 0
+
+    for piece, value in zip(chess.PIECE_TYPES, piece_values):
+        eval += len(board.pieces(piece, chess.WHITE)) * value
+
+    for piece, value in zip(chess.PIECE_TYPES, piece_values):
+        eval -= len(board.pieces(piece, chess.BLACK)) * value
+   
+    return eval
+
+def _eval_piece_heatmap(board):
+    # Pawn Heatmap
+    eval = sum([pawntable[i] for i in board.pieces(chess.PAWN, chess.WHITE)])
+    eval -= sum([pawntable[chess.square_mirror(i)] for i in board.pieces(chess.PAWN, chess.BLACK)])
+
+    # Knight Heatmap
+    eval += sum([knightstable[i] for i in board.pieces(chess.KNIGHT, chess.WHITE)])
+    eval -= sum([knightstable[chess.square_mirror(i)] for i in board.pieces(chess.KNIGHT, chess.BLACK)])
+    
+    # Bishop Heatmap
+    eval += sum([bishopstable[i] for i in board.pieces(chess.BISHOP, chess.WHITE)])
+    eval -= sum([bishopstable[chess.square_mirror(i)] for i in board.pieces(chess.BISHOP, chess.BLACK)])
+    
+    # Rook Heatmap
+    eval += sum([rookstable[i] for i in board.pieces(chess.ROOK, chess.WHITE)])
+    eval -= sum([rookstable[chess.square_mirror(i)] for i in board.pieces(chess.ROOK, chess.BLACK)])
+
+    # Queen Heatmap
+    eval += sum([queenstable[i] for i in board.pieces(chess.QUEEN, chess.WHITE)])
+    eval -= sum([queenstable[chess.square_mirror(i)] for i in board.pieces(chess.QUEEN, chess.BLACK)])
+
+    # King Heatmap
+    eval += kingstable[board.king(chess.WHITE)]
+    eval -= kingstable[board.king(chess.BLACK)]
+
+    return eval
+
+def _eval_square_attacks(board):
+    eval = 0
+    for square in chess.SQUARES:
+        eval += len(board.attackers(chess.WHITE, square))
+        eval -= len(board.attackers(chess.BLACK, square))
+    return eval
+
+def _eval_attacks(board):
+    eval = 0
+    piece_types = [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]
+    for color in chess.COLORS:
+        color_eval = 0
+        for piece_type in piece_types:
+            for square in board.pieces(piece_type, color):
+                color_eval += len(board.attacks(square))
+        if color:
+            eval += color_eval
+        else:
+            eval -= color_eval
+    return eval*30
+
+def _eval_attackers(board):
+    eval = 0
+
+    piece_types = [chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]
+    for color in chess.COLORS:
+        color_eval = 0
+        for piece_type in piece_types:
+            for square in board.pieces(piece_type, color):
+                color_eval += len(board.attackers(not color, square))
+        if color:
+            eval -= color_eval
+        else:
+            eval += color_eval
+
+    eval -= len(board.attackers(chess.BLACK, board.king(chess.WHITE)))
+    eval += len(board.attackers(chess.WHITE, board.king(chess.BLACK)))
+
+    return eval
+
+def _eval_king_safety(board):
+    eval = 0
+    return eval
 

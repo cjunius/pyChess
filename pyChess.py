@@ -6,8 +6,6 @@ from chessboard import display
 
 game_board = None
 
-
-
 def main():
 
     bot1_wins = 0
@@ -16,12 +14,12 @@ def main():
 
     white_bot = choose_bot("White")
     black_bot = choose_bot("Black")
-    print(white_bot.getName() + " vs " + black_bot.getName())
+    print("\n" + white_bot.getName() + " vs " + black_bot.getName())
     game_board = display.start()
 
     for i in range(0, 9):
 
-        board = chess.Board(chess.STARTING_FEN)
+        board = chess.Board()
         display.update(board.fen(), game_board)
 
         while not board.outcome():
@@ -29,7 +27,6 @@ def main():
             if i%2 == 0:
                 winner = validate_move(board, white_bot.findMove(board.copy(stack=False)) )
                 display.update(board.fen(), game_board)
-                
                 if not winner == None:
                     if winner == "White":
                         bot1_wins += 1
@@ -68,8 +65,12 @@ def main():
                         draws += 1
                     break
 
+        board.clear()
+        board.reset()
+        1
     bot1_score = bot1_wins + draws * 0.5
     bot2_score = bot2_wins + draws * 0.5
+    print("\n" + white_bot.getName() + " vs " + black_bot.getName())
     print("Final: " + str(bot1_score) + " - " + str(bot2_score))
     print("")
     display.terminate()
