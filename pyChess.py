@@ -1,3 +1,5 @@
+import signal
+import sys
 import chess
 import chess.svg
 from chessboard import display
@@ -6,11 +8,14 @@ from bots.BoardControlBot import BoardControlBot
 from bots.cjBot import CJBot
 from bots.randomBot import RandomBot
 from bots.materialGirlBot import MaterialGirlBot
+from bots.pieceSquareTableBot import PieceSquareTableBot
+
+# Catch KeyboardInterrupt and quit
+def catchthesignal(signal, frame):
+    sys.exit(0)
+signal.signal(signal.SIGINT, catchthesignal)
 
 game_board = None
-
-BOTS = [BoardControlBot(), MaterialGirlBot(), CJBot(), RandomBot()]
-BOTS.sort(key=lambda x: x.getName())
 
 def main():
 
@@ -66,6 +71,7 @@ def main():
     display.terminate()
 
 def choose_bot(player: str):
+    BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), PieceSquareTableBot(), RandomBot()]
     print("")
     count = 1
     for bot in BOTS:

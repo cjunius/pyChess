@@ -1,14 +1,14 @@
 import chess
 import chess.polyglot
-from engines.NegaMaxAB import Engine
+from engines.NegaScout import Engine
 from evaluation import Evaluation
 
 PIECE_VALUES = [(chess.PAWN, 100), (chess.KNIGHT, 280), (chess.BISHOP, 320), (chess.ROOK, 379), (chess.QUEEN, 929), (chess.KING, 0)]
 
-class BoardControlBot(Engine):
+class NegaScoutBot(Engine):
 
     def getName(self):
-        return "Board Control Bot"
+        return "NegaScout Bot"
 
     def evaluate_board(self, board: chess.Board):
         if board.is_game_over():
@@ -23,6 +23,4 @@ class BoardControlBot(Engine):
             if board.is_seventyfive_moves():
                 return -1
 
-        eval = Evaluation.board_control(board)
-
-        return eval if board.turn else -eval   
+        return Evaluation.board_control(board)

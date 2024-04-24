@@ -1,6 +1,6 @@
 import chess
 import chess.polyglot
-from engine import Engine
+from engines.NegaMaxAB import Engine
 from evaluation import Evaluation
 
 class MaterialGirlBot(Engine):

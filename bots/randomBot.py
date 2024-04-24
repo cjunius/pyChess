@@ -1,6 +1,6 @@
 import random
 import chess
-from engine import Engine
+from engines.NegaMaxAB import Engine
 
 class RandomBot(Engine):
     def getName(self):

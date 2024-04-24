@@ -1,5 +1,5 @@
 import chess
-from engine import Engine
+from engines.NegaMaxAB import Engine
 from evaluation import Evaluation
 
 class CJBot(Engine):
