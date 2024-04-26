@@ -9,6 +9,7 @@ from bots.cjBot import CJBot
 from bots.randomBot import RandomBot
 from bots.materialGirlBot import MaterialGirlBot
 from bots.pieceSquareTableBot import PieceSquareTableBot
+from bots.MTDfBot import MTDfBot
 
 # Catch KeyboardInterrupt and quit
 def catchthesignal(signal, frame):
@@ -71,7 +72,7 @@ def main():
     display.terminate()
 
 def choose_bot(player: str):
-    BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), PieceSquareTableBot(), RandomBot()]
+    BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), MTDfBot(depth=5), PieceSquareTableBot(), RandomBot()]
     print("")
     count = 1
     for bot in BOTS:

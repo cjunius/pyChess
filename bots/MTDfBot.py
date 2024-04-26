@@ -1,11 +1,11 @@
 import chess
-from engines.NegaScoutAB import Engine
+from engines.MTDf import Engine
 from evaluation import Evaluation
 
-class NegaScoutBot(Engine):
+class MTDfBot(Engine):
 
     def getName(self):
-        return "NegaScout Bot"
+        return "MTDf Bot"
 
     def evaluate_board(self, board: chess.Board, turn: bool):
         
@@ -16,6 +16,7 @@ class NegaScoutBot(Engine):
         eval = 0
         #eval += Evaluation.material_balance(board, turn)
         #eval += Evaluation.board_control(board, turn)
+        #eval += Evaluation.piece_square_table(board, turn)
         #eval += Evaluation.mobility(board)
 
         return eval

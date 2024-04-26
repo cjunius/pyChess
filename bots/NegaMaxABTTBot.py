@@ -2,10 +2,10 @@ import chess
 from engines.NegaMaxABTT import Engine
 from evaluation import Evaluation
 
-class PieceSquareTableBot(Engine):
+class NegaMaxABTTBot(Engine):
 
     def getName(self):
-        return "Piece-Square Table Bot"
+        return "NegaMax Alpha-Beta with Transposition Table Bot"
 
     def evaluate_board(self, board: chess.Board, turn: bool):
         
@@ -13,6 +13,9 @@ class PieceSquareTableBot(Engine):
         if quick_eval is not None:
             return quick_eval
         
-        eval = Evaluation.piece_square_table(board, turn)
+        eval = 0
+        #eval += Evaluation.material_balance(board, turn)
+        #eval += Evaluation.board_control(board, turn)
+        #eval += Evaluation.mobility(board)
 
         return eval

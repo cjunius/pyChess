@@ -11,7 +11,9 @@ from bots.materialGirlBot import MaterialGirlBot
 from bots.pieceSquareTableBot import PieceSquareTableBot
 from bots.NegaScoutBot import NegaScoutBot
 from bots.NegaMaxBot import NegaMaxBot
+from bots.NegaMaxABTTBot import NegaMaxABTTBot
 from bots.NegaMaxABBot import NegaMaxABBot
+from bots.MTDfBot import MTDfBot
 
 # Catch KeyboardInterrupt and quit
 def catchthesignal(signal, frame):
@@ -19,7 +21,7 @@ def catchthesignal(signal, frame):
 signal.signal(signal.SIGINT, catchthesignal)
 
 
-methods = ['material_balance', 'piece_square_table', 'board_control', 'mobility', 'board_control_slow']
+methods = ['material_balance', 'piece_square_table', 'board_control', 'mobility']
 args = [chess.Board("r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6")]
 for method in methods:
     start = time.time()
@@ -31,22 +33,22 @@ for method in methods:
     # Time: 0.02301335  Eval: 166 - piece_square_table
     # Time: 0.03904319  Eval: 19 - board_control
     # Time: 0.13712454  Eval: 22 - mobility
-    # Time: 0.25723362  Eval: 19 - board_control_slow
 
 
 ## BOTS
-BOTS = [NegaScoutBot(), NegaMaxABBot()]
+BOTS = [NegaMaxABTTBot(), NegaMaxABBot() ]
 # BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), PieceSquareTableBot(), RandomBot()]
-# board = chess.Board("r3kb1r/pp1bpppp/2n2nN1/2ppq3/2P5/6PP/PPNPPP2/R1BQKBR1 b Qkq - 5 9")
+board = chess.Board("r3kb1r/pp1bpppp/2n2nN1/2ppq3/2P5/6PP/PPNPPP2/R1BQKBR1 b Qkq - 5 9")
 # board = chess.Board("r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6")
-board = chess.Board("1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20")
+# board = chess.Board("1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20")
+# board = chess.Board("1k6/6R1/7R/8/8/8/8/6K1 w - - 0 1")
 
 for bot in BOTS:
     print("# " + bot.getName() + " - using board_control evaluation")
     start = time.time()
     move = bot.findMove(board)
     end = time.time()
-    print("")
+    print("Move: " + str(board.san(move)) + " Time: " + str(end-start))
 
 # FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
 # Stockfish says move is Qxf5
@@ -58,13 +60,13 @@ for bot in BOTS:
 
 # FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
 # NegaScout Bot - using board_control evaluation
-# White  6. Qxe7+   Eval:     -2  Depth:  3  Nodes:  1359096  Evals:  126444  Prune: 9.30%  Time:  11.10  Evals/s: 11389.22  FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
+# White  6. Qxe7+   Eval:     -2  Depth:  3  Evals:  126444 Time:  11.10  Evals/s: 11389.22  FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
 # NegaMax Alpha-Beta Bot - using board_control evaluation
-# White  6. Qxe7+   Eval:     -7  Depth:  3  Nodes:  1359096  Evals:    6031  Prune: 0.44%  Time:   0.58  Evals/s: 10370.94  FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
+# White  6. Qxe7+   Eval:     -7  Depth:  3  Evals:    6031  Time:   0.58  Evals/s: 10370.94  FEN: r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6
 
 # FEN: 1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20
 # Stockfish says move is Bd5
 # NegaScout Bot - using board_control evaluation
-# Black 20. Qa6     Eval:      6  Depth:  3  Nodes:  4389902  Evals: 1826217  Prune: 41.60%  Time: 176.85  Evals/s: 10326.58  FEN: 1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20
+# Black 20. Qa6     Eval:      6  Depth:  3  Evals: 1826217  Time: 176.85  Evals/s: 10326.58  FEN: 1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20
 # NegaMax Alpha-Beta Bot - using board_control evaluation
-# Black 20. Bxc3    Eval:      3  Depth:  3  Nodes:  4389902  Evals:  419824  Prune: 9.56%  Time:  41.55  Evals/s: 10105.10  FEN: 1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20
+# Black 20. Bxc3    Eval:      3  Depth:  3  Evals:  419824  Time:  41.55  Evals/s: 10105.10  FEN: 1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20
