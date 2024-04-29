@@ -63,11 +63,18 @@ mate_in_2 = [
     ("6k1/7R/8/5Q2/8/8/8/6K1 w - - 0 1", "Qf7#"),                                   # Railroad Mate - part 2
 ]
 
-mate_in_3 = [
+mate_in_3_as_black = [
     ("1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 1", "Qd1+"),               # Mate in 3 - Part 1 - Qd1+ (Sacrifice), Kxd1, 
     ("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+"),                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
     ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/2K5 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 - Rd1#
     ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/4K3 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 alt - Rd1#
+]
+
+mate_in_3_as_white = [
+    ("5k2/2b2ppp/3q4/5b2/3P4/PP2Q3/2r1B1PP/4R1K1 w - - 0 1", "Qe8+"),                # Same as above with pieces flipped color
+    ("4k3/2b2ppp/3q4/5b2/3P4/PP6/2r1B1PP/4R1K1 w - - 0 2", "Bb5+"),
+    ("5k2/2b2ppp/3q4/1B3b2/3P4/PP6/2r3PP/4R1K1 w - - 2 3", "Re8#"),
+    ("3k4/2b2ppp/3q4/1B3b2/3P4/PP6/2r3PP/4R1K1 w - - 2 3", "Re8#")
 ]
 
 others = [
@@ -99,17 +106,26 @@ others = [
     ("r2qnrnk/p2b2b1/1p1p2pp/2pPpp2/1PP1P3/PRNBB3/3QNPPP/5RK1 w - - 0 1", "f4")
 ]
 
-puzzles = [
-    ("Mate in 1", mate_in_1) 
-    ,("Mate in 2", mate_in_2)
-    ,("Mate in 3", mate_in_3)
-    #,("Others", others)
+failing = [
+    ("1k6/6R1/7P/8/8/8/8/6K1 w - - 0 1", "h7")                                     # Mate in 2, p1, pawn push
+    #,("2k5/6RP/8/8/8/8/8/6K1 w - - 1 2", "h8=Q#")                                   # Mate in 2, p2 , continuation
+    #,("1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 1", "Qd1+")              # Mate in 3 - Part 1 - Qd1+ (Sacrifice), Kxd1, 
+    #,("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+")                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
 ]
 
-depth = 3
-bots = [NegaScoutBot(depth=depth)]
-# bots = [NegaMaxABBot(depth=depth)]
-# bots = [NegaMaxABBot(depth=depth), NegaMaxABTTBot(depth=depth), NegaScoutBot(depth=depth)]
+puzzles = [
+    #("Mate in 1", mate_in_1) 
+    ("Mate in 2", mate_in_2)
+    ,("Mate in 3 - Playing as White", mate_in_3_as_white)
+    ,("Mate in 3 - Playing as Black", mate_in_3_as_black)
+    #,("Others", others)
+    #("Failing", failing)
+]
+
+depth = 5
+# bots = [NegaScoutBot(depth=depth)]
+bots = [NegaMaxABBot(depth=depth)]
+# bots = [NegaMaxABBot(depth=depth), NegaScoutBot(depth=depth)]
 # bots = [MaterialGirlBot(depth=depth), PieceSquareTableBot(depth=depth), BoardControlBot(depth=depth), MobilityBot(depth=depth), MaterialPSTBot(depth=depth), CJBot(depth=depth)]
 
 results = []

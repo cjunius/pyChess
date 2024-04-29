@@ -1,6 +1,6 @@
 import random
 import chess
-from engines.NegaMaxAB import Engine
+from engines.NegaMax import Engine
 
 class RandomBot(Engine):
     def getName(self):
@@ -10,5 +10,5 @@ class RandomBot(Engine):
         legal_moves = list(board.legal_moves)
         return random.choice(legal_moves)
     
-    def evaluate_board(self, board: chess.Board):
+    def evaluate_board(self, board: chess.Board, depth: int):
         return 0

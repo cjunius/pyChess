@@ -1,5 +1,5 @@
 import chess
-from engines.NegaMaxABTT import Engine
+from engines.NegaMax import Engine
 from evaluation import Evaluation
 
 class BoardControlBot(Engine):
@@ -7,12 +7,17 @@ class BoardControlBot(Engine):
     def getName(self):
         return "Board Control Bot"
 
-    def evaluate_board(self, board: chess.Board, turn: bool):
+    def evaluate_board(self, board: chess.Board, depth: int):
+        
+        if board.is_game_over():
+            return Evaluation.game_over(board, depth)
+        
+        if board.is_repetition():
+            return 0
+        
+        eval = 0
+        #eval += Evaluation.material_balance(board)
+        eval += Evaluation.board_control(board)
+        #eval += Evaluation.mobility(board)
 
-        quick_eval = Evaluation.quick_check(board, turn)
-        if quick_eval is not None:
-            return quick_eval
-
-        eval = Evaluation.board_control(board, turn)
-
-        return eval   
+        return eval 

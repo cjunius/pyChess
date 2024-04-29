@@ -1,9 +1,10 @@
+from typing import List
 import chess
 
 class Move_Ordering:
 
     @staticmethod   
-    def order_moves(board: chess.Board):
+    def order_moves(board: chess.Board) -> List[chess.Move]:
         legal_moves = list(board.legal_moves)
         legal_moves.sort(reverse=True, key=lambda move: (
             Move_Ordering._rank_checks(board, move), 
@@ -14,19 +15,21 @@ class Move_Ordering:
         return legal_moves
     
     @staticmethod
-    def _rank_checks(board: chess.Board, move: chess.Move):
-        if board.gives_check(move):
-            value = 1
-            board.push(move)
-            if board.is_checkmate():
-                value = 2
+    def _rank_checks(board: chess.Board, move: chess.Move) -> int:
+
+        board.push(move)
+        if board.is_checkmate():
             board.pop()
-            return value
-        else:
-            return 0
+            return 2
+        board.pop()
+
+        if board.gives_check(move):
+            return 1
+
+        return 0
 
     @staticmethod
-    def _rank_captures(board: chess.Board, move: chess.Move):
+    def _rank_captures(board: chess.Board, move: chess.Move) -> int:
         PIECE_VALUES = {
             'P': 1, 'p': 1,
             'N': 2, 'n': 2, 

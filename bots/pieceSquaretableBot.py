@@ -1,5 +1,5 @@
 import chess
-from engines.NegaMaxABTT import Engine
+from engines.NegaMax import Engine
 from evaluation import Evaluation
 
 class PieceSquareTableBot(Engine):
@@ -7,12 +7,15 @@ class PieceSquareTableBot(Engine):
     def getName(self):
         return "Piece-Square Table Bot"
 
-    def evaluate_board(self, board: chess.Board, turn: bool):
+    def evaluate_board(self, board: chess.Board, depth: int):
         
-        quick_eval = Evaluation.quick_check(board, turn)
-        if quick_eval is not None:
-            return quick_eval
+        if board.is_game_over():
+            return Evaluation.game_over(board, depth)
         
-        eval = Evaluation.piece_square_table(board, turn)
+        if board.is_repetition():
+            return 0
+        
+        eval = 0
+        eval += Evaluation.piece_square_table(board)
 
-        return eval
+        return eval 

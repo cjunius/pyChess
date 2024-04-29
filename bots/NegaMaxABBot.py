@@ -1,21 +1,26 @@
 import chess
-from engines.NegaMaxAB import Engine
+from engines.NegaMax import Engine
 from evaluation import Evaluation
 
 class NegaMaxABBot(Engine):
 
+    def __init__(self, depth=3, debug=False):
+        super().__init__(depth=depth, debug=debug, useAlphaBetaPruning=True, useTranspositionTable=False)
+
     def getName(self):
         return "NegaMax Alpha-Beta Bot"
 
-    def evaluate_board(self, board: chess.Board, turn: bool):
+    def evaluate_board(self, board: chess.Board, depth: int):
         
-        quick_eval = Evaluation.quick_check(board, turn)
-        if quick_eval is not None:
-            return quick_eval
+        if board.is_game_over():
+            return Evaluation.game_over(board, depth)
+        
+        if board.is_repetition():
+            return 0
         
         eval = 0
-        #eval += Evaluation.material_balance(board, turn)
-        #eval += Evaluation.board_control(board, turn)
+        eval += Evaluation.material_balance(board)
+        #eval += Evaluation.board_control(board)
         #eval += Evaluation.mobility(board)
 
-        return eval
+        return eval 

@@ -6,15 +6,13 @@ import sys
 
 from move_ordering import Move_Ordering
 
-# Todo: Figure out why it fails Mate in 2 and Mate in 3 tests
-
 class Engine():
     def __init__(self, depth=3, opening_book="bots/books/bookfish.bin", debug=False):
         self.depth = depth
         self.opening_book = opening_book
-        self.myTurn = chess.WHITE
         self.evaluations = 0 
         self.debug = debug
+        self.color = chess.WHITE
 
     @abstractmethod
     def getName(self):
@@ -25,7 +23,7 @@ class Engine():
         pass
 
     def findMove(self, board: chess.Board):
-        self.myTurn = board.turn
+        self.color = board.turn
         output = "White " if board.turn else "Black "
         try:
             with chess.polyglot.open_reader(self.opening_book) as reader:
@@ -35,20 +33,15 @@ class Engine():
                 return move
         except:
             bestMove = chess.Move.null()
-            bestValue = -10000
-            alpha = -99999
-            beta = 99999
+            bestValue = -sys.maxsize+500
+            alpha = -sys.maxsize+500
+            beta = sys.maxsize-500
 
             startTime = time.time()
             legal_moves = Move_Ordering.order_moves(board)
             for move in legal_moves:
                 
                 board.push(move)
-                if board.is_checkmate(): 
-                    board.pop()
-                    bestMove = move
-                    bestValue = 99999
-                    break # No sense in searching if move is checkmate
                 boardValue = -self.negascout(board, self.depth - 1, alpha, beta)
                 board.pop()
 
@@ -75,48 +68,51 @@ class Engine():
 
             return bestMove
         
+    #https://www.chessprogramming.org/NegaScout
     def negascout(self, board, depth, alpha, beta):
         
-        if depth == 0 or board.is_game_over():
-            return -self.quiesce(board, alpha, beta)
+        if depth == 0 or board.is_game_over():                              # leaf node
+            return self.quiesce(board, alpha, beta, depth)
 
         legal_moves = Move_Ordering.order_moves(board)
         for move in legal_moves:
-            board.push(move)
-            if move == legal_moves[0]:
-                score = -self.negascout(board, depth-1, -beta, -alpha)
-            else:
-                score = -self.negascout(board, depth-1, -alpha - 1, -alpha) #null window search
-                if alpha < score < beta:
-                    score = -self.negascout(board, depth-1, -beta, -alpha) #if fail, do a full re-search
-                    
-            board.pop()
 
+            beta_prime = beta
+
+            board.push(move)
+            score = -self.negascout(board, depth-1, -beta_prime, -alpha)    # null window search
+            if alpha < score < beta and not move == legal_moves[0]:
+                score = -self.negascout(board, depth-1, -beta, -alpha)      # null window search failed, so re-search
+            board.pop()
             alpha = max(alpha, score)
 
             if alpha >= beta:
-                break # beta-cutoff
+                break                                                       # beta-cutoff
+
+            beta_prime = alpha + 1                                          # set new null window
 
         return alpha
 
     # Quiescence Search
     # https://www.chessprogramming.org/Quiescence_Search
-    def quiesce(self, board, alpha, beta):
+    def quiesce(self, board, alpha, beta, depth):
         self.evaluations += 1
-        stand_pat = -self.evaluate_board(board, self.myTurn)
+        stand_pat = self.evaluate_board(board, depth)
         if stand_pat >= beta:
             return beta
         alpha = max(alpha, stand_pat)
 
-        if board.is_game_over():
+        if board.is_checkmate():
             return stand_pat
 
         legal_moves = list(board.legal_moves)
-        legal_moves.sort(reverse=True, key=lambda move: board.is_capture(move))
-        for move in legal_moves:
-            if not board.is_capture(move): break
+        legal_moves.sort(reverse=True, key=lambda move: (board.is_irreversible(move)))
+        for move in legal_moves: 
             board.push(move)
-            score = -self.quiesce(board, -beta, -alpha)
+            if not board.is_irreversible(move):
+                board.pop()
+                break
+            score = -self.quiesce(board, -beta, -alpha, depth-1)
             board.pop()
 
             if score >= beta:
