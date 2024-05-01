@@ -10,11 +10,12 @@ class NegaScoutBot(Engine):
     def getName(self):
         return "NegaScout Bot"
 
-    def evaluate_board(self, board: chess.Board, depth: int):
+    def evaluate_board(self, board: chess.Board, depth: int, color: bool):
         
         if board.is_game_over():
-            return Evaluation.game_over(board, depth)
-        
+            eval = Evaluation.game_over(board, depth)
+            return eval if color else -eval
+
         if board.is_repetition():
             return 0
         
@@ -23,4 +24,4 @@ class NegaScoutBot(Engine):
         #eval += Evaluation.board_control(board)
         #eval += Evaluation.mobility(board)
 
-        return eval 
+        return eval

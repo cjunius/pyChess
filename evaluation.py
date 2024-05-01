@@ -139,9 +139,10 @@ class Evaluation:
 
     @staticmethod
     def game_over(board: chess.Board, depth_remaining: int) -> int:
+
         if board.is_checkmate():
             eval = 9999 + depth_remaining
-            return eval if board.turn else -eval
+            return -eval if board.turn else eval
         if board.is_stalemate():
             return 0
         if board.is_insufficient_material():
@@ -162,7 +163,7 @@ class Evaluation:
             550 * (chess.popcount(white & board.rooks) - chess.popcount(black & board.rooks)) +
             1000 * (chess.popcount(white & board.queens) - chess.popcount(black & board.queens))
         )
-        return eval if board.turn else -eval
+        return -eval if board.turn else eval
     
     @staticmethod
     def piece_square_table(board) -> int:
@@ -170,7 +171,7 @@ class Evaluation:
         for piece, heatmap in MG_PST:
             eval += sum([heatmap[i] for i in board.pieces(piece, chess.WHITE)])*10
             eval += sum([-heatmap[chess.square_mirror(i)] for i in board.pieces(piece, chess.BLACK)])*10
-        return eval if board.turn else -eval
+        return -eval if board.turn else eval
 
     @staticmethod
     def board_control(board) -> int:
@@ -181,7 +182,7 @@ class Evaluation:
         for square in chess.SquareSet(board.occupied_co[chess.BLACK]):
             eval -= len(board.attacks(square))*10
 
-        return eval if board.turn else -eval
+        return -eval if board.turn else eval
     
     @staticmethod
     def mobility(board) -> int:
@@ -197,7 +198,7 @@ class Evaluation:
         # D, S, I = doubled, blocked and isolated pawns
         # return -0.5(D-D' + S-S' + I-I')
         eval = 0
-        return eval if board.turn else -eval
+        return -eval if board.turn else eval
     
 # ToDo:
 # - Material Evaluation - COMPLETE

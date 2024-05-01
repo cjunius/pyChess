@@ -13,6 +13,8 @@ class Engine():
         self.evaluations = 0 
         self.debug = debug
         self.color = chess.WHITE
+        self.san_move_stack = []
+        self.once = True
 
     @abstractmethod
     def getName(self):
@@ -33,7 +35,7 @@ class Engine():
                 return move
         except:
             bestMove = chess.Move.null()
-            bestValue = -sys.maxsize+500
+            bestValue = -sys.maxsize
             alpha = -sys.maxsize+500
             beta = sys.maxsize-500
 
@@ -41,15 +43,21 @@ class Engine():
             legal_moves = Move_Ordering.order_moves(board)
             for move in legal_moves:
                 
+                self.san_move_stack.append(board.san(move))
                 board.push(move)
-                boardValue = -self.negascout(board, self.depth - 1, alpha, beta)
+                value = self.negascout(board, self.depth - 1, alpha, beta)
                 board.pop()
+                self.san_move_stack.pop()
 
-                if boardValue > bestValue:
-                    bestValue = boardValue
+                if value > bestValue:
+                    bestValue = value
                     bestMove = move
 
-                alpha = max(boardValue, alpha)
+                alpha = max(value, alpha)
+                if alpha >= beta:
+                    break
+
+                print("Evaluated move {}  Score:  {}  Alpha: {}  Beta: {}  - CurBestScore: {}  CurBestMove:  {}".format(board.san(move), value, alpha, beta, bestValue, board.san(bestMove)))
 
             endTime = time.time()
             diff = round(endTime - startTime, 3)
@@ -72,22 +80,30 @@ class Engine():
     def negascout(self, board, depth, alpha, beta):
         
         if depth == 0 or board.is_game_over():                              # leaf node
-            return self.quiesce(board, alpha, beta, depth)
+            eval = self.evaluate_board(board, depth, self.color) #self.quiesce(board, alpha, beta, depth) 
+            return eval
 
         legal_moves = Move_Ordering.order_moves(board)
+        firstMove = legal_moves[0]
         for move in legal_moves:
 
             beta_prime = beta
 
+            self.san_move_stack.append(board.san(move))
             board.push(move)
-            score = -self.negascout(board, depth-1, -beta_prime, -alpha)    # null window search
-            if alpha < score < beta and not move == legal_moves[0]:
-                score = -self.negascout(board, depth-1, -beta, -alpha)      # null window search failed, so re-search
+            score = self.negascout(board, depth-1, -beta_prime, -alpha)    # null window search
+            if alpha < score < beta and not move == firstMove:
+                score = self.negascout(board, depth-1, -beta, -alpha)      # null window search failed, so re-search
+
+            if self.san_move_stack[0] == "Qd2+" or self.san_move_stack[0] == "Qd1+":
+                print("Evaluated " + str(self.san_move_stack) + ": " + str(score) + "  Alpha: " + str(alpha) + "  Beta: " + str(beta))
+
+            self.san_move_stack.pop()
             board.pop()
             alpha = max(alpha, score)
 
             if alpha >= beta:
-                break                                                       # beta-cutoff
+                return alpha                                                # beta-cutoff
 
             beta_prime = alpha + 1                                          # set new null window
 
@@ -97,25 +113,22 @@ class Engine():
     # https://www.chessprogramming.org/Quiescence_Search
     def quiesce(self, board, alpha, beta, depth):
         self.evaluations += 1
-        stand_pat = self.evaluate_board(board, depth)
+        stand_pat = self.evaluate_board(board, depth, self.color)
         if stand_pat >= beta:
             return beta
-        alpha = max(alpha, stand_pat)
+        if alpha < stand_pat:
+            alpha = stand_pat
 
-        if board.is_checkmate():
-            return stand_pat
+        for move in board.legal_moves: 
+            if not board.is_capture(move):
+                continue
 
-        legal_moves = list(board.legal_moves)
-        legal_moves.sort(reverse=True, key=lambda move: (board.is_irreversible(move)))
-        for move in legal_moves: 
             board.push(move)
-            if not board.is_irreversible(move):
-                board.pop()
-                break
-            score = -self.quiesce(board, -beta, -alpha, depth-1)
+            score = self.quiesce(board, -beta, -alpha, depth-1)
             board.pop()
 
             if score >= beta:
                 return beta
-            alpha = max(alpha, score)
+            if score > alpha:
+                alpha = score
         return alpha

@@ -36,10 +36,10 @@ for method in methods:
 
 
 ## BOTS
-BOTS = [NegaMaxABTTBot(), NegaMaxABBot() ]
+BOTS = [NegaScoutBot() ]
 # BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), PieceSquareTableBot(), RandomBot()]
-board = chess.Board("r3kb1r/pp1bpppp/2n2nN1/2ppq3/2P5/6PP/PPNPPP2/R1BQKBR1 b Qkq - 5 9")
-# board = chess.Board("r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6")
+# board = chess.Board("r3kb1r/pp1bpppp/2n2nN1/2ppq3/2P5/6PP/PPNPPP2/R1BQKBR1 b Qkq - 5 9")
+board = chess.Board("r1bqkb1r/p1pppp1p/np6/5nB1/3PQ3/2N5/PPP1PPPP/R3KBNR w KQkq - 2 6")
 # board = chess.Board("1r4k1/1r2ppbp/3n2p1/q1pP4/5BP1/2N2Q1P/PP2RPK1/R7 b - - 2 20")
 # board = chess.Board("1k6/6R1/7R/8/8/8/8/6K1 w - - 0 1")
 

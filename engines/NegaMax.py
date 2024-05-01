@@ -99,7 +99,7 @@ class Engine():
         if self.useTranspositionTable:
             alpha_prime = alpha
 
-            hash = chess.polyglot.zobrist_hash(board=board)
+            chess.polyglot.zobrist_hash(board=board)
             ttEntry = self.tt.getEntry(hash)
 
             if ttEntry and ttEntry.depth >= depth:
@@ -133,7 +133,7 @@ class Engine():
                 
                 if self.useTranspositionTable:
                     if ttEntry is None:
-                        ttEntry = TransTableEntry(hash)
+                        ttEntry = TransTableEntry(hash=hash)
                     ttEntry.value = value
                     ttEntry.depth = depth
 

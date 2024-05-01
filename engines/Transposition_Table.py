@@ -1,3 +1,5 @@
+import chess
+import chess.polyglot
 from enum import Enum
 
 class FLAG(Enum):
@@ -6,6 +8,8 @@ class FLAG(Enum):
     UPPER_BOUND = 1
 
 class TransTableEntry():
+    __slots__ = ['z_key', 'value', 'depth', 'flag']
+
     def __init__(self, hash):
         self.z_key = hash
         self.value: int = 0
@@ -13,6 +17,8 @@ class TransTableEntry():
         self.flag: FLAG = FLAG.EXACT
 
 class TransTable():
+    __slots__ = ['table', 'size', 'maxSize']
+
     def __init__(self, init_size = 0, max_size = 10 ** 7):
         self.table = {}
         self.size: int = init_size
@@ -26,6 +32,10 @@ class TransTable():
         self.table[entry.z_key] = entry
         self.size += 1
 
-    def getEntry(self, hash):
-        return self.table.get(hash)  
+    def getEntry(self, hash: int):
+        return self.table.get(hash)
+    
+    def getEntry(self, board: chess.Board):
+        z_hash = chess.polyglot.zobrist_hash(board)
+        return self.table.get(z_hash)
         

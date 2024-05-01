@@ -13,8 +13,9 @@ from bots.NegaMaxBot import NegaMaxBot
 from bots.NegaMaxABBot import NegaMaxABBot
 from bots.NegaMaxABTTBot import NegaMaxABTTBot
 from bots.MTDfBot import MTDfBot
+from bots.MinimaxBot import MinimaxBot
 
-mate_in_1 = [    
+mate_in_1_as_white = [    
     # https://chessfox.com/checkmate-patterns/
     ("8/4N1pk/8/8/8/4R3/8/6K1 w - - 0 1","Rh3#"),                               # Anastasia's Mate
     ("6k1/6P1/5K2/8/8/8/7R/8 w - - 0 1", "Rh8#"),                               # Anderssen's Mate
@@ -31,7 +32,6 @@ mate_in_1 = [
     ("5rk1/6p1/6P1/8/8/7Q/8/6K1 w - - 0 1", "Qh7#"),                            # Damiano's Mate
     ("8/8/1R6/5pkp/8/5KPP/8/8 w - - 0 1", "h4#"),                               # David and Goliath Mate
     ("3rkr2/8/8/8/2Q5/8/8/6K1 w - - 0 1", "Qe6#"),                              # Epaulette Mate
-    ("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1", "Qh4#"),  # Fool's Mate
     ("7k/6p1/8/8/2B5/8/8/2KR4 w - - 0 1", "Rh1#"),                              # Graco's Mate
     ("6k1/6P1/5K2/8/8/8/8/7R w - - 0 1", "Rh8#"),                               # H-file Mate
     ("2R5/6pk/6N1/5P2/8/8/8/6K1 w - - 0 1", "Rh8#"),                            # Hook Mate
@@ -52,7 +52,11 @@ mate_in_1 = [
     ("5k2/2R5/4PN2/8/8/8/8/6K1 w - - 0 1", "Rf7#"),                             # Vukovic Mate
 ]
 
-mate_in_2 = [
+mate_in_1_as_black = [
+    ("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1", "Qh4#"),  # Fool's Mate
+]
+
+mate_in_2_as_white = [
     ("1k6/6R1/7P/8/8/8/8/6K1 w - - 0 1", "h7"),                                     # Mate in 2, p1, pawn push
     ("2k5/6RP/8/8/8/8/8/6K1 w - - 1 2", "h8=Q#"),                                   # Mate in 2, p2 , continuation
 
@@ -63,11 +67,19 @@ mate_in_2 = [
     ("6k1/7R/8/5Q2/8/8/8/6K1 w - - 0 1", "Qf7#"),                                   # Railroad Mate - part 2
 ]
 
+mate_in_2_as_black = [
+    ("1k6/8/8/8/8/p7/1r6/6K1 b - - 0 1", "a2"),                                     # Mate in 2, p1, pawn push
+    ("1k6/8/8/8/8/8/pr6/5K2 b - - 1 2", "a1=Q#"),                                   # Mate in 2, p2 , continuation
+
+    ("1k6/8/8/2q5/8/r7/1K6/8 b - - 0 1", "Qc3+"),                                   # Railroad Mate - Part 1
+    ("1k6/8/8/8/8/r1q5/8/1K6 b - - 2 2", "Ra1#"),                                   # Railroad Mate - part 2
+]
+
 mate_in_3_as_black = [
     ("1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 1", "Qd1+"),               # Mate in 3 - Part 1 - Qd1+ (Sacrifice), Kxd1, 
-    ("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+"),                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
-    ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/2K5 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 - Rd1#
-    ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/4K3 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 alt - Rd1#
+    #("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+"),                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
+    #("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/2K5 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 - Rd1#
+    #("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/4K3 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 alt - Rd1#
 ]
 
 mate_in_3_as_white = [
@@ -114,17 +126,19 @@ failing = [
 ]
 
 puzzles = [
-    #("Mate in 1", mate_in_1) 
-    ("Mate in 2", mate_in_2)
-    ,("Mate in 3 - Playing as White", mate_in_3_as_white)
-    ,("Mate in 3 - Playing as Black", mate_in_3_as_black)
-    #,("Others", others)
+    ("Mate in 1 - Playing as White", mate_in_1_as_white),
+    ("Mate in 1 - Playing as Black", mate_in_1_as_black),
+    ("Mate in 2 - Playing as White", mate_in_2_as_white),
+    ("Mate in 2 - Playing as Black", mate_in_2_as_black),
+    ("Mate in 3 - Playing as White", mate_in_3_as_white),
+    ("Mate in 3 - Playing as Black", mate_in_3_as_black),
+    #("Others", others),
     #("Failing", failing)
 ]
 
 depth = 5
-# bots = [NegaScoutBot(depth=depth)]
-bots = [NegaMaxABBot(depth=depth)]
+bots = [MinimaxBot(depth=depth)]
+# bots = [NegaMaxABBot(depth=depth)]
 # bots = [NegaMaxABBot(depth=depth), NegaScoutBot(depth=depth)]
 # bots = [MaterialGirlBot(depth=depth), PieceSquareTableBot(depth=depth), BoardControlBot(depth=depth), MobilityBot(depth=depth), MaterialPSTBot(depth=depth), CJBot(depth=depth)]
 
