@@ -1,45 +1,42 @@
-from typing import List
-import chess
+import random
+from chess import Board, Move
 
-class Move_Ordering:
+from evaluation import PIECE_VALUES
 
-    @staticmethod   
-    def order_moves(board: chess.Board) -> List[chess.Move]:
-        legal_moves = list(board.legal_moves)
-        legal_moves.sort(reverse=True, key=lambda move: (
-            Move_Ordering._rank_checks(board, move), 
-            Move_Ordering._rank_captures(board, move),
-            board.is_castling(move),
-            
-        ))
-        return legal_moves
+class BaseMoveOrdering(object):
+    def __init__(self, board: Board):
+        if board is None:
+            raise ValueError("Board must be specified")
+        self.board = board
+
+class ChecksCapturesOrderMixin(BaseMoveOrdering):
+    def order_moves(self):
+        checks = []
+        captures = []
+        non_captures = []
+
+        for move in self.board.legal_moves:
+            if self.board.gives_check(move):
+                self.board.push(move)
+                if self.board.is_checkmate():
+                    self.board.pop()
+                    return [move] #no point in searching other moves if checkmate exists
+                self.board.pop()
+                checks.append(move)
+            elif self.board.is_capture(move):
+                captures.append(move)
+            else:
+                non_captures.append(move)
+
+        random.shuffle(checks)
+        captures.sort(reverse=True, key=lambda x: self.mvvlva(x))
+        random.shuffle(non_captures)
+
+        return checks + captures + non_captures
     
-    @staticmethod
-    def _rank_checks(board: chess.Board, move: chess.Move) -> int:
-
-        board.push(move)
-        if board.is_checkmate():
-            board.pop()
-            return 2
-        board.pop()
-
-        if board.gives_check(move):
-            return 1
-
+    def mvvlva(self, m: Move):
+        attacker = self.board.piece_at(m.from_square)
+        victim = self.board.piece_at(m.to_square)
+        if victim:
+           return 8*PIECE_VALUES[victim.piece_type] - attacker.piece_type
         return 0
-
-    @staticmethod
-    def _rank_captures(board: chess.Board, move: chess.Move) -> int:
-        PIECE_VALUES = {
-            'P': 1, 'p': 1,
-            'N': 2, 'n': 2, 
-            'B': 3, 'b': 3,
-            'R': 4, 'r': 4,
-            'Q': 5, 'q': 5,
-            'K': 6, 'k': 6,
-            None: 0
-        }
-        if board.is_capture(move): 
-            return 64*PIECE_VALUES[move.drop] - PIECE_VALUES[board.piece_at(move.from_square).symbol()]
-        else: 
-            return 0

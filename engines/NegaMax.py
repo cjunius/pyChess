@@ -1,176 +1,111 @@
 import chess
-import chess.polyglot
-import time
-import sys
 
-from abc import abstractmethod
-from move_ordering import Move_Ordering
-from engines.Transposition_Table import TransTable, TransTableEntry, FLAG
+from chess import Board, polyglot
+from config import Config
+import pygame
+from copy import copy
+from engines.transposition_table import TransTable, TransTableEntry, FLAG
+import engines.move_ordering as move_ordering
+import engines.quiescence_search as quiescence_search
+import multiprocessing
+import multiprocessing.pool
 
-class Engine():
-    def __init__(self, 
-        depth=3, 
-        opening_book="bots/books/bookfish.bin", 
-        debug=False, 
-        useAlphaBetaPruning=True,
-        useTranspositionTable=True
-    ):
-        self.depth = depth
-        self.evaluations = 0
-        self.opening_book = opening_book
-        self.debug = debug
-        self.useAlphaBetaPruning = useAlphaBetaPruning
-        self.useTranspositionTable = useTranspositionTable
-        if useTranspositionTable:
-            self.useAlphaBetaPruning = True
-            self.tt = TransTable()
-        self.color = chess.WHITE
+class NegamaxEngine:
 
-        print("Initializing Bot: " + self.getName())
-        print("Features:")
-        print(" - Using Depth: " + str(self.depth))
-        print(" - Using Alpha Beta Pruning: " + str(self.useAlphaBetaPruning))
-        print(" - Using Transposition Table: " + str(self.useTranspositionTable))
-        print(" - Using Opening Book: " + str(self.opening_book))
-        print(" - Output Debug info: " + str(self.debug))
-        print("")
+    def __init__(self, config: Config = Config()):
+        self.config = config
+        self.tt = TransTable()
+        self.move_stack = []
 
-    @abstractmethod
-    def getName(self):
-        pass
-        
-    @abstractmethod
-    def evaluate_board(self, board: chess.Board):
-        pass
+    def get_name(self):
+        return "Negamax Engine"
 
-    def findMove(self, board: chess.Board):
-        self.color = board.turn
-        output = "White " if board.turn else "Black "
+    def find_move(self, board: Board):
         try:
-            with chess.polyglot.open_reader(self.opening_book) as reader:
-                move = reader.weighted_choice(board).move
-                if self.debug:
-                    output += "Book move: " + str(board.san(move))
-                    print(output)
-                return move
+            return polyglot.MemoryMappedReader(self.config.opening_book).weighted_choice(board).move
         except:
-            bestMove = chess.Move.null()
-            bestValue = -sys.maxsize+500
-            alpha = -sys.maxsize+500
-            beta = sys.maxsize-500
+            best_move = chess.Move.null()
+            #best_move, best_score = self.negamaxRoot(board, self.config.depth, -999999, 999999)
 
-            startTime = time.time()
-
-            legal_moves = Move_Ordering.order_moves(board)
-            for move in legal_moves:
-
-                board.push(move)
-                boardValue = -self.negamax(board, self.depth - 1, alpha, beta)
-                board.pop()
-
-                if boardValue > bestValue:
-                    bestValue = boardValue
-                    bestMove = move
-
-                if self.useAlphaBetaPruning:
-                    alpha = max(alpha, boardValue)
-
-            endTime = time.time()
-            diff = endTime - startTime
-            
-            if self.debug: 
-                output += "{:2}. {:7} Eval: {:6}  ".format(board.fullmove_number, board.san(bestMove), bestValue)
-                output += "Depth: {:2}  ".format(self.depth)
-                output += "Evals: {:7}  ".format(self.evaluations)
-                output += "Time: {:7.3f}  ".format(diff)
-                eps = round(self.evaluations/diff, 2) if diff>0 else 0.00
-                output += "Evals/s: {:8.2f}  ".format(eps)
-                output += "FEN: " + str(board.fen())
-                print(output)
-            
-            self.evaluations = 0
-            self.total_moves = 0
-            return bestMove
+            for i in range(1, self.config.depth + 1):
+                best_move, best_score = self.negamaxRoot(board, i, -999999, 999999)
+                if board.gives_check(best_move):
+                    board.push(best_move)
+                    if board.is_checkmate():
+                        board.pop()
+                        break
+                    board.pop()
+            return best_move       
+    
+    def negamaxRoot(self, board, depth, alpha, beta):
+        best_move: chess.Move = chess.Move.null()
+        best_score = -999999
         
-    # Negamax Search
-    # https://en.wikipedia.org/wiki/Negamax
-    def negamax(self, board: chess.Board, depth: int, alpha: int, beta: int):
-
-        if self.useTranspositionTable:
-            alpha_prime = alpha
-
-            chess.polyglot.zobrist_hash(board=board)
-            ttEntry = self.tt.getEntry(hash)
-
-            if ttEntry and ttEntry.depth >= depth:
-                if ttEntry.flag == FLAG.EXACT:
-                    return ttEntry.value
-                elif ttEntry.flag == FLAG.LOWER_BOUND:
-                    alpha = max(alpha, ttEntry.value)
-                elif ttEntry.flag == FLAG.UPPER_BOUND:
-                    beta = min(beta, ttEntry.value)
-                
-                if alpha >= beta:
-                    return ttEntry.value
-
-        if depth == 0 or board.is_game_over():
-            #return self.evaluate_board(board, depth)
-            return self.quiesce(board, alpha, beta, depth)
-        
-        value = -sys.maxsize
-        legal_moves = Move_Ordering.order_moves(board)
-        for move in legal_moves:
+        moves = move_ordering.order_moves(board)
+        for move in moves:
             board.push(move)
-            value = max(value, -self.negamax(board, depth - 1, -beta, -alpha))
+            score = -self.negamax(board, depth-1, -beta, -alpha)
             board.pop()
 
-            if self.useAlphaBetaPruning:
+            if score > best_score:
+                best_score = score
+                best_move = move
+                print("info bestmove {}".format(board.san(best_move)))
+            alpha = max(alpha, score)
+            
+        return best_move, best_score
 
-                alpha = max(alpha, value)
 
-                if alpha >= beta:
-                    break
-                
-                if self.useTranspositionTable:
-                    if ttEntry is None:
-                        ttEntry = TransTableEntry(hash=hash)
-                    ttEntry.value = value
-                    ttEntry.depth = depth
+    def negamax(self, board: Board, depth: int, alpha: int, beta: int) -> int:
+        
+        alpha_prime = alpha
 
-                    if value <= alpha_prime:
-                        ttEntry.flag = FLAG.LOWER_BOUND
-                    elif value >= beta:
-                        ttEntry.flag = FLAG.UPPER_BOUND
-                    else:
-                        ttEntry.flag = FLAG.EXACT
-                    
-                    self.tt.update_ttable(ttEntry)
+        hash = polyglot.zobrist_hash(board=board)
+        ttEntry = self.tt.getEntry(hash)
+        if ttEntry and ttEntry.depth >= depth:
+            if ttEntry.flag == FLAG.EXACT:
+                return ttEntry.value
+            elif ttEntry.flag == FLAG.LOWER_BOUND:
+                alpha = max(alpha, ttEntry.value)
+            elif ttEntry.flag == FLAG.UPPER_BOUND:
+                beta = min(beta, ttEntry.value)
+            
+            if alpha >= beta:
+                return ttEntry.value
 
-        return value
+        if depth <= 0 or board.is_game_over():
+            return quiescence_search.quiescence_search(board=board, alpha=alpha, beta=beta, depth=depth)
+        
+        # ToDo: Null Move pruning here
 
-    # Quiescence Search
-    # https://www.chessprogramming.org/Quiescence_Search
-    def quiesce(self, board: chess.Board, alpha: int, beta: int, depth: int):
-        self.evaluations += 1
-        stand_pat = self.evaluate_board(board, depth)
-        if stand_pat >= beta:
-            return beta
-        alpha = max(alpha, stand_pat)
-
-        if board.is_checkmate():
-            return stand_pat
-
-        legal_moves = list(board.legal_moves)
-        legal_moves.sort(reverse=True, key=lambda move: (board.is_irreversible(move)))
-        for move in legal_moves: 
+        best_score = -999999
+        moves = move_ordering.order_moves(board)
+        pygame.event.pump() #Prevent OS from thinking pygame has gone unresponsive
+        for move in moves:
+            self.move_stack.append(board.san(move))
             board.push(move)
-            if not board.is_irreversible(move): 
-                board.pop()
-                break
-            score = -self.quiesce(board, -beta, -alpha, depth-1)
+            score = -self.negamax(board, depth-1, -beta, -alpha)
+            
+            hash = polyglot.zobrist_hash(board=board)
+            ttEntry = TransTableEntry(hash=hash)
+            ttEntry.value = score
+            ttEntry.depth = depth
+            if score <= alpha_prime:
+                ttEntry.flag = FLAG.LOWER_BOUND
+            elif score >= beta:
+                ttEntry.flag = FLAG.UPPER_BOUND
+            else:
+                ttEntry.flag = FLAG.EXACT
+            
+            self.tt.update_ttable(ttEntry)
             board.pop()
+            self.move_stack.remove(board.san(move))
 
             if score >= beta:
-                return beta
+                return score
+            best_score = max(best_score, score)
             alpha = max(alpha, score)
-        return alpha
+            if alpha >= beta:
+                break
+
+        return best_score

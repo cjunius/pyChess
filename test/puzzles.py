@@ -1,21 +1,4 @@
-import chess
-import time
-
-from bots.BoardControlBot import BoardControlBot
-from bots.cjBot import CJBot
-from bots.randomBot import RandomBot
-from bots.materialGirlBot import MaterialGirlBot
-from bots.pieceSquareTableBot import PieceSquareTableBot
-from bots.materialPSTBot import MaterialPSTBot
-from bots.mobilityBot import MobilityBot
-from bots.NegaScoutBot import NegaScoutBot
-from bots.NegaMaxBot import NegaMaxBot
-from bots.NegaMaxABBot import NegaMaxABBot
-from bots.NegaMaxABTTBot import NegaMaxABTTBot
-from bots.MTDfBot import MTDfBot
-from bots.MinimaxBot import MinimaxBot
-
-mate_in_1_as_white = [    
+MATE_IN_1 = [    
     # https://chessfox.com/checkmate-patterns/
     ("8/4N1pk/8/8/8/4R3/8/6K1 w - - 0 1","Rh3#"),                               # Anastasia's Mate
     ("6k1/6P1/5K2/8/8/8/7R/8 w - - 0 1", "Rh8#"),                               # Anderssen's Mate
@@ -50,24 +33,19 @@ mate_in_1_as_white = [
     ("8/5p1p/6k1/8/6K1/4Q3/8/8 w - - 0 1", "Qg5#"),                             # Swallow's Tail Mate (Gueridon Mate)
     ("8/6p1/6kR/8/5Q2/8/8/6K1 w - - 0 1", "Qf6#"),                              # Triangle Mate
     ("5k2/2R5/4PN2/8/8/8/8/6K1 w - - 0 1", "Rf7#"),                             # Vukovic Mate
-]
-
-mate_in_1_as_black = [
     ("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 1", "Qh4#"),  # Fool's Mate
 ]
 
-mate_in_2_as_white = [
+MATE_IN_2 = [
     ("1k6/6R1/7P/8/8/8/8/6K1 w - - 0 1", "h7"),                                     # Mate in 2, p1, pawn push
     ("2k5/6RP/8/8/8/8/8/6K1 w - - 1 2", "h8=Q#"),                                   # Mate in 2, p2 , continuation
 
-    ("r2qkbnr/ppp2ppp/2np4/4N3/2B1P3/2N4P/PPPP1PP1/R1BbK2R w KQkq - 0 1", "Bxf7+"), # Legal's Mate - part1
+    ("r2qkbnr/ppp2ppp/2np4/4N3/2B1P3/2N4P/PPPP1PP1/R1BbK2R w KQkq - 0 1", "Bxf7+"), # Legal's Mate - part 1
     ("r2q1bnr/ppp1kBpp/2np4/4N3/4P3/2N4P/PPPP1PP1/R1BbK2R w KQ - 0 1", "Nd5#"),     # Legal's Mate - part 2
 
     ("8/6k1/8/5Q1R/8/8/8/6K1 w - - 0 1", "Rh7+"),                                   # Railroad Mate - Part 1
     ("6k1/7R/8/5Q2/8/8/8/6K1 w - - 0 1", "Qf7#"),                                   # Railroad Mate - part 2
-]
 
-mate_in_2_as_black = [
     ("1k6/8/8/8/8/p7/1r6/6K1 b - - 0 1", "a2"),                                     # Mate in 2, p1, pawn push
     ("1k6/8/8/8/8/8/pr6/5K2 b - - 1 2", "a1=Q#"),                                   # Mate in 2, p2 , continuation
 
@@ -75,21 +53,95 @@ mate_in_2_as_black = [
     ("1k6/8/8/8/8/r1q5/8/1K6 b - - 2 2", "Ra1#"),                                   # Railroad Mate - part 2
 ]
 
-mate_in_3_as_black = [
+MATE_IN_3 = [
     ("1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 1", "Qd1+"),               # Mate in 3 - Part 1 - Qd1+ (Sacrifice), Kxd1, 
-    #("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+"),                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
-    #("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/2K5 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 - Rd1#
-    #("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/4K3 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 alt - Rd1#
-]
+    ("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+"),                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
+    ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/2K5 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 - Rd1#
+    ("1k1r4/pp3R2/6pp/4p3/2B3b1/4Q3/PPP2B2/4K3 b - - 2 3", "Rd1#"),                 # Mate in 3 - Part 3 alt - Rd1#
 
-mate_in_3_as_white = [
     ("5k2/2b2ppp/3q4/5b2/3P4/PP2Q3/2r1B1PP/4R1K1 w - - 0 1", "Qe8+"),                # Same as above with pieces flipped color
     ("4k3/2b2ppp/3q4/5b2/3P4/PP6/2r1B1PP/4R1K1 w - - 0 2", "Bb5+"),
     ("5k2/2b2ppp/3q4/1B3b2/3P4/PP6/2r3PP/4R1K1 w - - 2 3", "Re8#"),
     ("3k4/2b2ppp/3q4/1B3b2/3P4/PP6/2r3PP/4R1K1 w - - 2 3", "Re8#")
 ]
 
-others = [
+SIMPLE_CAPTURES = [
+    ("6k1/2q2pp1/7p/8/8/7P/2Q2PP1/6K1 w - - 0 1", "Qxc7"), # White Queen takes Queen
+    ("6k1/2r2pp1/7p/8/8/7P/2Q2PP1/6K1 w - - 0 1", "Qxc7"), # White Queen takes Rook
+    ("6k1/2b2pp1/7p/8/8/7P/2Q2PP1/6K1 w - - 0 1", "Qxc7"), # White Queen takes Bishop
+    ("6k1/2n2pp1/7p/8/8/7P/2Q2PP1/6K1 w - - 0 1", "Qxc7"), # White Queen takes Knight
+    ("6k1/2p2pp1/7p/8/8/7P/2Q2PP1/6K1 w - - 0 1", "Qxc7"), # White Queen takes Pawn
+    ("6k1/2q2pp1/7p/8/8/7P/2R2PP1/6K1 w - - 0 1", "Rxc7"), # White Rook takes Queen
+    ("6k1/2r2pp1/7p/8/8/7P/2R2PP1/6K1 w - - 0 1", "Rxc7"), # White Rook takes Rook
+    ("6k1/2b2pp1/7p/8/8/7P/2R2PP1/6K1 w - - 0 1", "Rxc7"), # White Rook takes Bishop
+    ("6k1/2n2pp1/7p/8/8/7P/2R2PP1/6K1 w - - 0 1", "Rxc7"), # White Rook takes Knight
+    ("6k1/2p2pp1/7p/8/8/7P/2R2PP1/6K1 w - - 0 1", "Rxc7"), # White Rook takes Pawn
+    ("6k1/2q2ppp/8/8/8/6B1/5PPP/6K1 w - - 0 1", "Bxc7"), # White Bishop takes Queen
+    ("6k1/2r2ppp/8/8/8/6B1/5PPP/6K1 w - - 0 1", "Bxc7"), # White Bishop takes Rook
+    ("6k1/2b2ppp/8/8/8/6B1/5PPP/6K1 w - - 0 1", "Bxc7"), # White Bishop takes Bishop
+    ("6k1/2n2ppp/8/8/8/6B1/5PPP/6K1 w - - 0 1", "Bxc7"), # White Bishop takes Knight
+    ("6k1/2p2ppp/8/8/8/6B1/5PPP/6K1 w - - 0 1", "Bxc7"), # White Bishop takes Pawn
+    ("6k1/2q2ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1", "Nxc7"), # White Knight takes Queen
+    ("6k1/2r2ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1", "Nxc7"), # White Knight takes Rook
+    ("6k1/2b2ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1", "Nxc7"), # White Knight takes Bishop
+    ("6k1/2n2ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1", "Nxc7"), # White Knight takes Knight
+    ("6k1/2p2ppp/8/3N4/8/8/5PPP/6K1 w - - 0 1", "Nxc7"), # White Knight takes Pawn
+    ("5k2/2q5/3P4/8/8/8/8/5K2 w - - 0 1", "dxc7"), # White Pawn takes Queen
+    ("5k2/2r5/3P4/8/8/8/8/5K2 w - - 0 1", "dxc7"), # White Pawn takes Rook
+    ("5k2/2b5/3P4/8/8/8/8/5K2 w - - 0 1", "dxc7"), # White Pawn takes Bishop
+    ("5k2/2k5/3P4/8/8/8/8/5K2 w - - 0 1", "dxc7"), # White Pawn takes Knight
+    ("5k2/2p5/3P4/8/8/8/8/5K2 w - - 0 1", "dxc7"), # White Pawn takes Pawn
+
+    ("6k1/2q2pp1/7p/8/8/7P/2Q2PP1/6K1 b - - 0 1", "Qxc2"), # Black Queen takes Queen
+    ("6k1/2q2pp1/7p/8/8/7P/2R2PP1/6K1 b - - 0 1", "Qxc2"), # Black Queen takes Rook
+    ("6k1/2q2pp1/7p/8/8/7P/2B2PP1/6K1 b - - 0 1", "Qxc2"), # Black Queen takes Bishop
+    ("6k1/2q2pp1/7p/8/8/7P/2N2PP1/6K1 b - - 0 1", "Qxc2"), # Black Queen takes Knight
+    ("6k1/2q2pp1/7p/8/8/7P/2P2PP1/6K1 b - - 0 1", "Qxc2"), # Black Queen takes Pawn
+]
+
+SIMPLE_FORKS = [
+    ("6k1/5pp1/1b1n3p/8/2PP4/7P/5PP1/6K1 w - - 0 1", "c5"), # Pawn Fork
+    ("r3k1nr/ppp2ppp/2np4/2bNp3/2B1P1b1/3P1N2/PPP2PPP/R1B1K2R w KQkq - 0 1", "Nxc7+"), # White Knight forks King and Rook
+    ("8/8/4K3/7n/6k1/3Q4/8/8 b - - 0 1", "Nf4+"), # Black Knight forks King and Queen
+    ("4r3/k7/4r3/8/2K3N1/8/8/8 b - - 0 1", "Re4+"), # Black Rook forks King and Knight
+    ("1k1b4/8/7R/8/8/8/8/2K5 b - - 0 1", "Bg5+"), # Black Bishop forks King and Rook
+    ("8/8/3K4/7k/3nb3/8/8/8 w - - 0 1", "Ke5"), # White King forks Bishop and Knight
+]
+
+COMPLEX_FORKS = [
+    ("r5k1/p2n1p1p/1pb1pp2/7N/2P5/P7/5PPP/3RK2R w - - 0 1", "Rxd7"), # Part 1: White Rook takes Knight to Setup Knight Fork if Bishop Takes
+    ("r5k1/p2b1p1p/1p2pp2/7N/2P5/P7/5PPP/4K2R w - - 0 2", "Nxf6+"), # Part 2: White Knight forks King and Bishop
+    ("r7/p2b1pkp/1p2pN2/8/2P5/P7/5PPP/4K2R w - - 1 3", "Nxd7"), # Part 3: White Knight takes Bishop and is up a Knight)
+
+    ("r5k1/p2qn2p/1r4p1/3bBp2/1Qp2PP1/2P2B2/7P/1R1R2K1 w - - 0 1", "Qxe7"), # Part 1: White Queen takes Knight, Black Queen takes Queen
+    ("r5k1/p3q2p/1r4p1/3bBp2/2p2PP1/2P2B2/7P/1R1R2K1 w - - 0 2", "Bxd5+"), # Part 2: White Bishop takes Bishop, forking King and Rook
+    #("r4k2/p3q2p/1r4p1/3BBp2/2p2PP1/2P5/7P/1R1R2K1 w - - 1 3", "Bxa8"), # Part 3: White Bishop takes Rook, Black Rook takes Rook #ToDo: Alternative Rxb6 leads to similar position (2nd best stockfish move +0.6) Stockfish +1.9 for Rxa8
+    ("B4k2/p3q2p/6p1/4Bp2/2p2PP1/2P5/7P/1r1R2K1 w - - 0 4", "Rxb1"), # Part 4: White Rook takes Rook, White is up 2 Bishops and a Rook to Blacks Queen and Pawn
+]
+
+# Pins
+# - Relative Pin
+# - Absolute Pin
+# - Double Pin
+
+# Discovered Checks
+# - Discovered Double Check
+
+# Mates 
+# - Mate in 4
+# - Mate in 5
+# - Smothered Mate with a Pin
+# - Two Pawn Checkmate
+
+# Endgames
+# - K+Q vs K
+# - R+R+K vs K
+# - Q+R+K vs K
+
+# Cross Check
+# Classical Games
+
+OTHER = [
     # Forcing a draw/stalemate
 
     # Other
@@ -117,95 +169,3 @@ others = [
     ("r1bqk2r/pp2bppp/2p5/3pP3/P2Q1P2/2N1B3/1PP3PP/R4RK1 b kq - 0 1", "f6"),
     ("r2qnrnk/p2b2b1/1p1p2pp/2pPpp2/1PP1P3/PRNBB3/3QNPPP/5RK1 w - - 0 1", "f4")
 ]
-
-failing = [
-    ("1k6/6R1/7P/8/8/8/8/6K1 w - - 0 1", "h7")                                     # Mate in 2, p1, pawn push
-    #,("2k5/6RP/8/8/8/8/8/6K1 w - - 1 2", "h8=Q#")                                   # Mate in 2, p2 , continuation
-    #,("1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 1", "Qd1+")              # Mate in 3 - Part 1 - Qd1+ (Sacrifice), Kxd1, 
-    #,("1k1r4/pp1b1R2/6pp/4p3/2B5/4Q3/PPP2B2/3K4 b - - 0 2", "Bg4+")                 # Mate in 3 - Part 2 - Bg4+, Kc1 or Ke1
-]
-
-puzzles = [
-    ("Mate in 1 - Playing as White", mate_in_1_as_white),
-    ("Mate in 1 - Playing as Black", mate_in_1_as_black),
-    ("Mate in 2 - Playing as White", mate_in_2_as_white),
-    ("Mate in 2 - Playing as Black", mate_in_2_as_black),
-    ("Mate in 3 - Playing as White", mate_in_3_as_white),
-    ("Mate in 3 - Playing as Black", mate_in_3_as_black),
-    #("Others", others),
-    #("Failing", failing)
-]
-
-depth = 5
-bots = [MinimaxBot(depth=depth)]
-# bots = [NegaMaxABBot(depth=depth)]
-# bots = [NegaMaxABBot(depth=depth), NegaScoutBot(depth=depth)]
-# bots = [MaterialGirlBot(depth=depth), PieceSquareTableBot(depth=depth), BoardControlBot(depth=depth), MobilityBot(depth=depth), MaterialPSTBot(depth=depth), CJBot(depth=depth)]
-
-results = []
-for name, puzzle in puzzles:
-    results.append("")
-    results.append(name)
-    print(name)
-    for bot in bots:
-        correct = 0
-        incorrect = 0
-        start = time.time()
-        for fen, solution in puzzle:
-            board = chess.Board(fen)
-            move = bot.findMove(board)
-            print("Expected: {:6}  Got: {:6}  - Correct: {:5} - {} depth {}".format(solution, board.san(move), str(solution == board.san(move)), bot.getName(), depth))
-            if board.san(move) == solution:
-                correct += 1
-            else:
-                incorrect += 1        
-        end = time.time()
-        diff = round(end-start, 2)
-        results.append("{:60}  Result: {} - {}  Time: {:6.2f}".format(bot.getName(), correct, incorrect, diff))
-    print("")
-    
-for result in results:
-    print(result)
-
-
-# Mate in 1 - Depth 4
-# NegaMax Alpha-Beta Bot                            Result: 34 - 0  Time:   0.06
-# NegaMax Alpha-Beta with Transposition Table Bot   Result: 34 - 0  Time:   0.07
-# NegaScout Bot                                     Result: 34 - 0  Time:   0.06
-
-# Mate in 2 - Depth 4
-# NegaMax Alpha-Beta Bot                            Result: 6 - 0  Time:   3.13
-# NegaMax Alpha-Beta with Transposition Table Bot   Result: 6 - 0  Time:   3.52
-# NegaScout Bot                                     Result: 5 - 1  Time:  13.08
-
-# Mate in 3 - Depth 4
-# NegaMax Alpha-Beta Bot                            Result: 4 - 0  Time:  16.13
-# NegaMax Alpha-Beta with Transposition Table Bot   Result: 4 - 0  Time:  18.00
-# NegaScout Bot                                     Result: 2 - 2  Time:  13.56
-
-
-
-# Mate in 1 - Depth 4
-# Material Girl Bot                                             Result: 34 - 0  Time:   0.05
-# Piece-Square Table Bot                                        Result: 34 - 0  Time:   0.05
-# Board Control Bot                                             Result: 34 - 0  Time:   0.06
-# Mobility Bot                                                  Result: 34 - 0  Time:   0.10
-# Material & Piece-Square Table Bot                             Result: 34 - 0  Time:   0.05
-# CJ Bot                                                        Result: 34 - 0  Time:   0.05
-
-# Mate in 2 - Depth 4
-# Material Girl Bot                                             Result: 6 - 0  Time:   1.77
-# Piece-Square Table Bot                                        Result: 6 - 0  Time:   2.00
-# Board Control Bot                                             Result: 4 - 2  Time:   3.56
-# Mobility Bot                                                  Result: 6 - 0  Time:   2.95
-# Material & Piece-Square Table Bot                             Result: 6 - 0  Time:   1.98
-# CJ Bot                                                        Result: 6 - 0  Time:   3.33
-
-# Mate in 3 - Depth 4
-# Material Girl Bot                                             Result: 3 - 1  Time:   7.15
-# Piece-Square Table Bot                                        Result: 3 - 1  Time:   7.57
-# Board Control Bot                                             Result: 3 - 1  Time:  14.63
-# Mobility Bot                                                  Result: 3 - 1  Time:   8.30
-# Material & Piece-Square Table Bot                             Result: 3 - 1  Time:  16.13
-# CJ Bot                                                        Result: 4 - 0  Time:  18.76
-

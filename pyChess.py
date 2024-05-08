@@ -3,13 +3,11 @@ import sys
 import chess
 import chess.svg
 from chessboard import display
+from config import Config
 
-from bots.BoardControlBot import BoardControlBot
-from bots.cjBot import CJBot
-from bots.randomBot import RandomBot
-from bots.materialGirlBot import MaterialGirlBot
-from bots.pieceSquareTableBot import PieceSquareTableBot
-from bots.MTDfBot import MTDfBot
+from engines.negamax import NegamaxEngine
+from engines.random import RandomEngine
+import helper
 
 # Catch KeyboardInterrupt and quit
 def catchthesignal(signal, frame):
@@ -24,9 +22,9 @@ def main():
     bot2_wins = 0
     draws = 0
 
-    bot1 = choose_bot("Bot 1")
-    bot2 = choose_bot("Bot 2")
-    print("\n" + bot1.getName() + " vs " + bot2.getName())
+    engine1 = choose_engine("Player 1")
+    engine2 = choose_engine("Player 2")
+    print("\n" + engine1.get_name() + " vs " + engine2.get_name())
     game_board = display.start()
 
     for i in range(0, 9):
@@ -38,18 +36,18 @@ def main():
         while not board.outcome():
 
             if i%2 == 0:
-                winner = validate_move(board, bot1.findMove(board.copy(stack=False)) )
+                winner = validate_move(board, engine1.find_move(board.copy(stack=False)) )
                 display.update(board.fen(), game_board)
                 if not winner == None:
                     break
 
-            winner = validate_move(board, bot2.findMove(board.copy(stack=False)) )
+            winner = validate_move(board, engine2.find_move(board.copy(stack=False)) )
             display.update(board.fen(), game_board)
             if not winner == None:
                 break
 
             if i%2 == 1:
-                winner = validate_move(board, bot1.findMove(board.copy(stack=False)) )
+                winner = validate_move(board, engine1.find_move(board.copy(stack=False)) )
                 display.update(board.fen(), game_board)
                 if not winner == None:
                     break
@@ -57,31 +55,28 @@ def main():
         if (winner == "White" and i%2 == 0) or (winner == "Black" and i%2 == 1):
             bot1_wins += 1
         elif (winner == "Black" and i%2 == 0) or (winner == "White" and i%2 == 1):
-            bot2_wins += 2
+            bot2_wins += 1
         else:
             draws += 1
 
         bot1_score = bot1_wins + draws * 0.5
         bot2_score = bot2_wins + draws * 0.5
-        print(bot1.getName() + " " + str(bot1_score) + " - " + str(bot2_score) + " " + bot2.getName())
-        print("")
+        print(engine1.get_name() + " " + str(bot1_score) + " - " + str(bot2_score) + " " + engine2.get_name())
 
         board.clear()
         board.reset()
         
     display.terminate()
 
-def choose_bot(player: str):
-    BOTS = [BoardControlBot(), CJBot(), MaterialGirlBot(), MTDfBot(depth=5), PieceSquareTableBot(), RandomBot()]
+def choose_engine(player: str):
+    ENGINES = helper.get_engines()
     print("")
-    count = 1
-    for bot in BOTS:
-        print('{num}: {name}'.format(num=count,name=bot.getName()))
-        count += 1
+    for idx, engine in enumerate(ENGINES):
+        print('{num}: {name}'.format(num=idx+1,name=engine.get_name()))
 
-    x = input('choose ' + player + ': ')
-    bot = BOTS[int(x)-1]
-    return bot
+    x = input('Choose ' + player + ': ')
+    engine = ENGINES[int(x)-1]
+    return engine
     
 def validate_move(board: chess.Board, move: chess.Move):
     if move in board.legal_moves:

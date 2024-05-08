@@ -1,5 +1,6 @@
-import chess
-import chess.polyglot
+import random
+import time
+from chess import Move
 from enum import Enum
 
 class FLAG(Enum):
@@ -8,13 +9,15 @@ class FLAG(Enum):
     UPPER_BOUND = 1
 
 class TransTableEntry():
-    __slots__ = ['z_key', 'value', 'depth', 'flag']
+    __slots__ = ['z_key', 'best_move', 'depth', 'value', 'flag', 'age']
 
-    def __init__(self, hash):
-        self.z_key = hash
-        self.value: int = 0
+    def __init__(self, hash: int):
+        self.z_key: int = hash
+        self.best_move: Move = Move.null()
         self.depth: int = 0
+        self.value: int = 0
         self.flag: FLAG = FLAG.EXACT
+        self.age: float = time.time()
 
 class TransTable():
     __slots__ = ['table', 'size', 'maxSize']
@@ -26,7 +29,7 @@ class TransTable():
 
     def update_ttable(self, entry: TransTableEntry):
         if self.size == self.maxSize:
-            self.table.popitem()
+            self.table.pop(random.choice(self.table.keys()))
             self.size -= 1
     
         self.table[entry.z_key] = entry
@@ -34,8 +37,4 @@ class TransTable():
 
     def getEntry(self, hash: int):
         return self.table.get(hash)
-    
-    def getEntry(self, board: chess.Board):
-        z_hash = chess.polyglot.zobrist_hash(board)
-        return self.table.get(z_hash)
         
