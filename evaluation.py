@@ -68,37 +68,48 @@ PIECE_SQUARE_TABLES = [
 ]
 
 class BaseEvaluation(object):
-    def __init__(self, board: Board):
-        if board is None:
-            raise ValueError("Board must be specified")
-        self.board = board
+    def __init__(self):
+        pass
 
-    def evaluate(self) -> int:
+    def evaluate(self, board) -> int:
         return 0
 
 
 class PieceValueMixin(BaseEvaluation):
-    def evaluate(self) -> int:
-        score = super(PieceValueMixin, self).evaluate()
+    def evaluate(self, board) -> int:
+        score = super(PieceValueMixin, self).evaluate(board)
         for piece in chess.PIECE_TYPES:
-            pieces_mask = self.board.pieces_mask(piece, self.board.turn)
+            pieces_mask = board.pieces_mask(piece, board.turn)
             score += chess.popcount(pieces_mask) * PIECE_VALUES[piece]
 
-            pieces_mask = self.board.pieces_mask(piece, not self.board.turn)
+            pieces_mask = board.pieces_mask(piece, not board.turn)
             score -= chess.popcount(pieces_mask) * PIECE_VALUES[piece]
 
         return score
     
 
 class PieceSquareTableMixin(BaseEvaluation):
-    def evaluate(self) -> int:
-        parent_score = super(PieceSquareTableMixin, self).evaluate()
+    def evaluate(self, board) -> int:
+        parent_score = super(PieceSquareTableMixin, self).evaluate(board)
         score = 0
         for piece in chess.PIECE_TYPES:
-            for square in self.board.pieces(piece, chess.WHITE):
+            for square in board.pieces(piece, chess.WHITE):
                 score += PIECE_SQUARE_TABLES[piece][square]
-            for square in self.board.pieces(piece, chess.BLACK):
+            for square in board.pieces(piece, chess.BLACK):
                 score -= PIECE_SQUARE_TABLES[piece][square ^ 56]
-        if not self.board.turn: #Black to Move
+        if not board.turn: #Black to Move
             score = -score
         return parent_score + score
+    
+
+class MobilityMixin(BaseEvaluation):
+    def evaluate(self, board) -> int:
+        parent_score = super(MobilityMixin, self).evaluate(board)
+        if len(list(board.move_stack)) == 0:
+            return 0
+
+        last_move = board.pop()
+        countA = len(list(board.legal_moves))
+        board.push(last_move)
+        countB = len(list(board.legal_moves))
+        return countA - countB + parent_score

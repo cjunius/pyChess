@@ -1,14 +1,17 @@
 
+from multiprocessing.pool import Pool
+import concurrent.futures
+from operator import itemgetter
 import time
-import chess
 import sys
 import signal
 
+from chess import Board
 from evaluation import PieceValueMixin, PieceSquareTableMixin
 from move_ordering import ChecksCapturesOrderMixin
 from perft import perft
 from sys import stdout
-from search import NegamaxMixin, RandomMixin
+from search import NegamaxMixin, QuiescenceSearchMixin, RandomMixin
 
 
 def catchKeyboardInterrupt(signal, frame):
@@ -16,17 +19,14 @@ def catchKeyboardInterrupt(signal, frame):
 signal.signal(signal.SIGINT, catchKeyboardInterrupt)
 
 
-class NegamaxEngine(NegamaxMixin, PieceValueMixin, PieceSquareTableMixin, ChecksCapturesOrderMixin):
-    pass
-
-class RandomEngine(RandomMixin):
+class NegamaxEngine(NegamaxMixin, QuiescenceSearchMixin, PieceValueMixin, PieceSquareTableMixin, ChecksCapturesOrderMixin):
     pass
 
 class UCI:
     def __init__(self) -> None:
-        self.board = chess.Board()
-        self.engine = RandomEngine(self.board)
-
+        self.board = Board()
+        self.engine = NegamaxEngine()
+        self.depth = 6
 
     def processCommand(self, input: str) -> str:
         args = input.split(" ")
@@ -42,13 +42,14 @@ class UCI:
             case "register":
                 return "Not implemented yet\n"
             case "ucinewgame":
-                self.board = chess.Board()
-                self.engine = RandomEngine(self.board)
+                self.board = Board()
                 return ""
             case "position":
                 return self.position_handler(args)
             case "go":
-                return self.go_handler()
+                return self.go_handler(False)
+            case "go_parallel":
+                return self.go_handler(True)
             case "stop":
                 return "Not implemented yet\n"
             case "ponderhit":
@@ -61,12 +62,15 @@ class UCI:
                 return str(list(self.board.legal_moves)) + "\n"
             case "printMoveStack":
                 replay = self.board.root()
-                san_stack = [replay.san_and_push(m) for m in self.board.move_stack]
+                san_stack = [replay.san_and_push(m) for m in self.engine.board.move_stack]
                 return str(san_stack) + "\n"
             case "perft":
                 return self.perft_handler(args)
+            case "selfPlay":
+                return self.selfPlay_handler(args)
             case _:
                 return "Unknown command\n"
+            
 
 
     def uci_handler(self):
@@ -78,60 +82,70 @@ class UCI:
 
 
     def position_handler(self, args):
-
-        if args[1] == "startpos":
-            self.board = chess.Board()
         
+        board = Board()
+
         if args[1] == "fen":
             fen_string = args[2]
             for i in range(3, 8):
                 fen_string += " " + args[i]
 
-            self.board = chess.Board(fen_string)
+            board = Board(fen_string)            
 
         moves_found = False
         for i in range(1, len(args)):
 
             if moves_found:
-                self.board.push_uci(args[i])
+                board.push_uci(args[i])
             else:
                 if args[i] == "moves": 
                     moves_found = True
-
-        self.engine = RandomEngine(self.board)
         
+        self.board = board
+
         return ""
             
 
-    def go_handler(self):
-        start = time.time()
-        best_score, pv = self.engine.search(-99999, 99999, 5)
-        end = time.time()
-        stdout.write("info score " + str(best_score) + " pv " + str(pv) + "\n")
-        stdout.write("info time " + str(end - start) + "\n")
-        stdout.flush()
-        return "bestmove " + str(pv[0]) + "\n"
+    def go_handler(self, parallel: bool):
 
-        # Can respond with info statements
-        # info depth <x>
-        # info time <x> (in ms)
-        # info nodes <x>
-        # info pv <move1> ... <moveN>
-        # info score cp <x> (in centipawns)
-        # info score mate <y> (mate in y moves, NOT plies)
-        # info score lowerbound <x>
-        # info score upperbound <x>
-        # info currmove <move>
-        # info nps <x>
-
-
-    def perft_handler(self, args):
-        depth = int(args[1])
-        for i in range(2, depth+1):
-            nodes, time = perft(self.board, i)
-            stdout.write("info depth " + str(i) + " nodes " + str(nodes) + " time " + str(time) + "\n")
+        # try:
+        #     move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+        #     stdout.write("info using book move\n")
+        #     stdout.flush()
+        #     return "bestmove " + str(move) + "\n"
+        # except:
+            start = time.time()
+            if parallel:
+                best_score, pv = self.parallel_go() 
+            else:
+                best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
+            end = time.time()
+            stdout.write("info score " + str(best_score) + " pv " + str(pv) + "\n")
+            stdout.write("info time " + str(end - start) + "\n")
             stdout.flush()
-        return ""
+            return "bestmove " + str(pv[0]) + "\n"
+        
+
+    def parallel_go(self):
+        best_score = -99999
+        pv = []
+        count = 0
+        start = time.time()
+        results = Pool().imap(self.call_search, range(1, self.depth+1))
+        for t, x in results:
+            end = time.time()
+            print('info score {} pv {} time {}'.format(str(t), str(x), str(end-start)))
+            if len(x) > count:
+                count = len(x)
+                best_score = t
+                pv = x
+        return best_score, pv
+        
+    def call_search(self, depth):
+        return self.engine.search(self.board, -99999, 99999, depth)
+
+    def selfPlay_handler(self, args):
+        pass
 
 
 def main() -> None:

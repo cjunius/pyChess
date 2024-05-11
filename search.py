@@ -1,52 +1,50 @@
 import random
-import chess
-from chess import Board
+from typing import List
+from chess import Board, Move
 
 class BaseSearch(object):
-    def __init__(self, board: Board):
-        if board is None:
-            raise ValueError("Board must be specified")
-        self.board = board
-
     def stop_signal(self):
         return False
     
-    def is_drawn(self):
-        return self.board.is_fivefold_repetition() \
-            or self.board.is_stalemate() \
-            or self.board.is_seventyfive_moves() \
-            or self.board.is_insufficient_material()
+    def is_drawn(self, board):
+        return board.is_fivefold_repetition() \
+            or board.is_stalemate() \
+            or board.is_seventyfive_moves() \
+            or board.is_insufficient_material()
     
-    def order_moves(self):
-        return self.board.legal_moves
+    def order_moves(self, board):
+        return board.legal_moves
+    
+    def evaluate_leaf_node(self, board, alpha, beta, depth):
+        return self.evaluate(), []
     
 class RandomMixin(BaseSearch):
-    def search(self, alpha, beta, depth, ply=0):
-        return 0, [random.choice(list(self.board.legal_moves))]
+    def search(self, board, alpha=0, beta=0, depth=0, ply=0):
+        return 0, [random.choice(list(board.legal_moves))]
     
 
 class NegamaxMixin(BaseSearch):
-    def search(self, alpha, beta, depth, ply=0):
+    def search(self, board, alpha, beta, depth, ply=0):
 
-        if depth <= 0 or self.board.is_game_over():
-            if self.board.is_checkmate():
+        if depth <= 0 or board.is_game_over():
+            if board.is_checkmate():
                 return -9999 - depth, []
-            elif self.is_drawn():
+            elif self.is_drawn(board):
                 return 0 - depth, []
             else:
-                return self.evaluate(), []
+                return self.evaluate_leaf_node(board, alpha, beta, depth), []
             
         if ply > 1 and self.stop_signal():
             return 0, []
         
         best_score = -99999
         pv = []
-        moves = self.order_moves()
+        moves = self.order_moves(board)
         for move in moves:
-            self.board.push(move)
-            child_score, child_pv = self.search(-beta, -alpha, depth-1, ply+1)
+            board.push(move)
+            child_score, child_pv = self.search(board, -beta, -alpha, depth-1, ply+1)
             child_score = -child_score
-            self.board.pop()
+            board.pop()
 
             if ply > 0 and self.stop_signal():
                 return 0, []
@@ -62,3 +60,50 @@ class NegamaxMixin(BaseSearch):
                     pv = [move] + child_pv
 
         return alpha, pv
+    
+class QuiescenceSearchMixin(BaseSearch):
+
+    def evaluate_leaf_node(self, board, alpha: int, beta: int, depth: int) -> int:
+        if board.is_game_over():
+            if board.is_checkmate():
+                return -9999 - depth
+            if self.is_drawn(board):
+                return 0 - depth
+            
+        if board.is_repetition():
+            return 0
+
+        stand_pat = self.evaluate(board)
+        if stand_pat >= beta:
+            return beta
+        alpha = max(alpha, stand_pat)
+
+        def order_moves_quiescence() -> List[Move]:
+            captures = []
+            for move in board.legal_moves:
+                if board.gives_check(move):
+                    captures.append(move)
+                elif board.is_capture(move):
+                    captures.append(move)
+                elif not move.promotion == None:
+                    captures.append(move)
+
+            random.shuffle(captures)
+            return captures
+
+        moves = order_moves_quiescence()
+        for move in moves:
+
+            #ToDo: Delta Pruning
+
+            board.push(move)
+            score = -self.evaluate_leaf_node(board, -beta, -alpha, depth-1)
+            board.pop()
+            
+            if score >= beta:
+                return beta
+            alpha = max(alpha, score)
+
+        return alpha
+    
+    

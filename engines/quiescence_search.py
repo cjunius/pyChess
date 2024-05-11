@@ -1,4 +1,6 @@
-from chess import Board
+import random
+from typing import List
+from chess import Board, Move
 import engines.evaluation as evaluation
 import engines.move_ordering as move_ordering
 
@@ -25,13 +27,26 @@ def quiescence_search(board: Board, alpha: int, beta: int, depth: int) -> int:
         return beta
     alpha = max(alpha, stand_pat)
 
-    moves = move_ordering.order_moves_quiescence(board)
+    def order_moves_quiescence() -> List[Move]:
+        captures = []
+        for move in board.legal_moves:
+            if board.gives_check(move):
+                captures.append(move)
+            elif board.is_capture(move):
+                captures.append(move)
+            elif not move.promotion == None:
+                captures.append(move)
+
+        random.shuffle(captures)
+        return captures
+
+    moves = order_moves_quiescence(board)
     for move in moves:
 
         #ToDo: Delta Pruning
 
         board.push(move)
-        score = -quiescence_search(board, -beta, -alpha, depth-1)
+        score = -quiescence_search(-beta, -alpha, depth-1)
         board.pop()
         
         if score >= beta:
