@@ -1,6 +1,6 @@
 import random
 from typing import List
-from chess import Board, Move
+from chess import Move
 
 class BaseSearch(object):
     def stop_signal(self):
@@ -21,7 +21,7 @@ class BaseSearch(object):
 class RandomMixin(BaseSearch):
     def search(self, board, alpha=0, beta=0, depth=0, ply=0):
         return 0, [random.choice(list(board.legal_moves))]
-    
+
 
 class NegamaxMixin(BaseSearch):
     def search(self, board, alpha, beta, depth, ply=0):
@@ -55,9 +55,14 @@ class NegamaxMixin(BaseSearch):
             if child_score > best_score:
                 best_score = child_score
                 
-                if best_score > alpha:
-                    alpha = best_score
-                    pv = [move] + child_pv
+            # Removing Indentation
+            if best_score > alpha:
+                alpha = best_score
+                pv = [move] + child_pv
+
+            # Adding
+            if alpha >= beta:
+                break
 
         return alpha, pv
     
@@ -88,7 +93,6 @@ class QuiescenceSearchMixin(BaseSearch):
                 elif not move.promotion == None:
                     captures.append(move)
 
-            random.shuffle(captures)
             return captures
 
         moves = order_moves_quiescence()

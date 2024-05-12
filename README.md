@@ -23,6 +23,8 @@ python main.py
   - sets the position of the chess board from a known fen or starting position
 - isready
   - returns "readyok"
+- setoption depth <depth>
+  - sets the search depth
 - go
   - returns the next move
 - quit
@@ -30,7 +32,7 @@ python main.py
 
 #### Custom UCI Commands
 
-- perft <%depth>
+- perft <%depth> - Accidentally removed needs to be re-added
   - returns the total number of nodes for a given depth
 - printBoard
   - prints an ascii version of the board
@@ -38,6 +40,8 @@ python main.py
   - returns the list of legal moves for the current position
 - printMoveStack
   - returns the list of moves in the board's move stack
+- go_parallel
+  - returns the next move using parallel processing
 
 ## Chess Engine
 
@@ -48,8 +52,8 @@ python main.py
   - [MVV-LVA Captures](https://www.chessprogramming.org/MVV-LVA)
 - [Alpha-Beta Pruning](https://www.chessprogramming.org/Alpha-Beta)
   - [Quiescence Search](https://www.chessprogramming.org/Quiescence_Search)
-  - [Transposition Table](https://www.chessprogramming.org/Transposition_Table)
-  - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening)
+  - [Transposition Table](https://www.chessprogramming.org/Transposition_Table) - WIP
+  - [Iterative Deepening](https://www.chessprogramming.org/Iterative_Deepening) - WIP
 - Opening Book
 
 #### Optimizations still to be researched and implemented
@@ -98,6 +102,10 @@ python main.py
 - [Material Hash Table](https://www.chessprogramming.org/Material_Hash_Table)
 - [Pawn Hash Table](https://www.chessprogramming.org/Pawn_Hash_Table)
 
+- Evaluate the board before making any moves
+- Substract the value of the piece being moved in the from position
+- Add the value of the piece being moved in the to position
+
 ### Tests
 
 - Mate in 1, 2, 3, 4 & 5 (given depth = 2n-1)
@@ -110,3 +118,21 @@ python main.py
   - Removing the Defender
   - Skewers
 - Classic Games
+
+## Performance Results on my crappy system
+
+### Single Process for depth 2 to 6 from starting position
+
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.20219159126281738
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.2972705364227295
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 1.1590549945831299
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 9.515662431716919
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 74.66997766494751
+
+### Parallel Processes for depth 2 to 6 from starting position (Processes = 6)
+
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.18416738510131836
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.28125619888305664
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.6846230030059814
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 17.19064974784851
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 41.901145935058594

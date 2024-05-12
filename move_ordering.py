@@ -1,5 +1,4 @@
-import random
-from chess import Board, Move
+from chess import Move
 
 from evaluation import PIECE_VALUES
 
@@ -26,9 +25,7 @@ class ChecksCapturesOrderMixin(BaseMoveOrdering):
             else:
                 non_captures.append(move)
 
-        random.shuffle(checks)
         captures.sort(reverse=True, key=lambda x: self.mvvlva(board, x))
-        random.shuffle(non_captures)
 
         return checks + captures + non_captures
     
@@ -36,5 +33,5 @@ class ChecksCapturesOrderMixin(BaseMoveOrdering):
         attacker = board.piece_at(m.from_square)
         victim = board.piece_at(m.to_square)
         if victim:
-           return 8*PIECE_VALUES[victim.piece_type] - attacker.piece_type
+            return 8*PIECE_VALUES[victim.piece_type] - attacker.piece_type
         return 0

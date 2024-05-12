@@ -1,8 +1,8 @@
-from engines.negamax import NegamaxEngine
-from engines.random import RandomEngine
-from engines.firstMove import FirstMoveEngine
-from engines.lastMove import LastMoveEngine
-from config import Config
+from archive.negamax import NegamaxEngine
+from archive.random import RandomEngine
+from archive.firstMove import FirstMoveEngine
+from archive.lastMove import LastMoveEngine
+from archive.config import Config
 
 def get_engines(config: Config = Config()):
     return [NegamaxEngine(config=config), RandomEngine(config=config), FirstMoveEngine(config=config), LastMoveEngine(config=config)]

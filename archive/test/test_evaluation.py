@@ -1,6 +1,6 @@
 import chess
 
-import engines.evaluation as evaluation
+import archive.evaluation as evaluation
 
 class TestEvaluation:
     def test_material_balance_new_game(self):

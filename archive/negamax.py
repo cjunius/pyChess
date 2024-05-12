@@ -1,12 +1,12 @@
 import chess
 
 from chess import Board, polyglot
-from config import Config
+from archive.config import Config
 import pygame
 from copy import copy
-from engines.transposition_table import TransTable, TransTableEntry, FLAG
-import engines.move_ordering as move_ordering
-import engines.quiescence_search as quiescence_search
+from archive.transposition_table import TransTable, TransTableEntry, FLAG
+import archive.move_ordering as move_ordering
+import archive.quiescence_search as quiescence_search
 import multiprocessing
 import multiprocessing.pool
 

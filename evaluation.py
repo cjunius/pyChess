@@ -1,5 +1,4 @@
 import chess
-from chess import Board
 
 PIECE_VALUES = [None, 100, 320, 330, 500, 900, 0]
 
@@ -102,6 +101,20 @@ class PieceSquareTableMixin(BaseEvaluation):
         return parent_score + score
     
 
+class PieceValueSquareTableMixin(BaseEvaluation):
+    def evaluate(self, board) -> int:
+        parent_score = super(PieceValueSquareTableMixin, self).evaluate(board)
+        score = 0
+        for piece in chess.PIECE_TYPES:
+            for square in board.pieces(piece, chess.WHITE):
+                score += PIECE_SQUARE_TABLES[piece][square] + PIECE_VALUES[piece]
+            for square in board.pieces(piece, chess.BLACK):
+                score -= PIECE_SQUARE_TABLES[piece][square ^ 56] + PIECE_VALUES[piece]
+        if not board.turn: #Black to Move
+            score = -score
+        return parent_score + score
+
+
 class MobilityMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
         parent_score = super(MobilityMixin, self).evaluate(board)
@@ -113,3 +126,15 @@ class MobilityMixin(BaseEvaluation):
         board.push(last_move)
         countB = len(list(board.legal_moves))
         return countA - countB + parent_score
+    
+
+class BoardControlEvaluationMixin(BaseEvaluation):
+    def evaluate(self, board) -> int:
+        eval = super(BoardControlEvaluationMixin, self).evaluate(board)
+        for square in chess.SquareSet(board.occupied_co[board.turn]):
+            eval += len(board.attacks(square))
+
+        for square in chess.SquareSet(board.occupied_co[not board.turn]):
+            eval -= len(board.attacks(square))
+
+        return eval

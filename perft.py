@@ -1,9 +1,9 @@
-import functools
-import multiprocessing
-from multiprocessing.pool import Pool
-import time
-from typing import Iterator, Tuple
+import functools, multiprocessing, time
+
 from chess import Board
+from multiprocessing.pool import Pool
+from typing import Iterator, Tuple
+
 
 def perft(board: Board, depth: int) -> Tuple[int, float]:
     start=time.time()

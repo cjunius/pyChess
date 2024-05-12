@@ -3,11 +3,10 @@ import sys
 import chess
 import chess.svg
 from chessboard import display
-from config import Config
 
-from engines.negamax import NegamaxEngine
-from engines.random import RandomEngine
-import helper
+
+
+import archive.helper as helper
 
 # Catch KeyboardInterrupt and quit
 def catchthesignal(signal, frame):

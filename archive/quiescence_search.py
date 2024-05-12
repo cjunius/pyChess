@@ -1,8 +1,8 @@
 import random
 from typing import List
 from chess import Board, Move
-import engines.evaluation as evaluation
-import engines.move_ordering as move_ordering
+import archive.evaluation as evaluation
+import archive.move_ordering as move_ordering
 
 # Quiescence Search
 # https://www.chessprogramming.org/Quiescence_Search

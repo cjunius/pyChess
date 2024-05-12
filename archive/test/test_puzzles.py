@@ -1,8 +1,8 @@
 import chess
 import pytest
 
-from config import Config
-import helper
+from archive.config import Config
+import archive.helper as helper
 from .puzzles import MATE_IN_1, MATE_IN_2, MATE_IN_3, SIMPLE_CAPTURES, SIMPLE_FORKS, COMPLEX_FORKS
 
 class TestPuzzles:

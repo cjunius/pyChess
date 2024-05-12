@@ -1,6 +1,6 @@
 from chess import Board
 
-import engines.quiescence_search as quiescence_search
+import archive.quiescence_search as quiescence_search
 
 class TestEvaluation:
 
