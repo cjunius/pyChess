@@ -92,14 +92,14 @@ class UCI:
         print("info starting search")
         
 
-        # try:
-        #     move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
-        #     print("info using book move")
-        #     print("bestmove " + str(move))
-        #     return
+        try:
+            move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+            print("info using book move")
+            print("bestmove " + str(move))
+            return
         
-        # except:
-        #     pass
+        except:
+            pass
 
         if len(args) > 1 and args[1] == "depth":
             self.depth = int(args[2])
@@ -116,11 +116,19 @@ class UCI:
 
     def selfPlay_handler(self, args):
         while not self.board.is_game_over():
-            start = time.time()
-            best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
-            end = time.time()
-            print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
-            self.board.push(pv[0])
+            try:
+                move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+                print("bestmove " + str(move))
+                self.board.push(move)
+            except:
+                start = time.time()
+                best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
+                end = time.time()
+                print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
+                print("bestmove {}".format(pv[0]))
+                self.board.push(pv[0])
+        
+        print(str(self.board.result()))
 
     
     def selfPlay_parallel_handler(self, args):
@@ -146,6 +154,7 @@ def main() -> None:
         if not command == "quit":
             uic.processCommand(command)
         else:
+            break
 
 
 if __name__ == "__main__":
