@@ -61,6 +61,8 @@ class UCI:
                 pass
             case "selfPlay":
                 self.selfPlay_handler(args)
+            case "selfPlay_parallel":
+                self.selfPlay_parallel_handler(args)
             case _:
                 print("Unknown command")
 
@@ -87,28 +89,53 @@ class UCI:
 
 
     def go_handler(self, parallel: bool, args):
+        print("info starting search")
         
         # try:
         #     move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
         #     print("info using book move")
         #     print("bestmove " + str(move))
         #     return
+        
         # except:
+        #     pass
+
         if len(args) > 1 and args[1] == "depth":
             self.depth = int(args[2])
         start = time.time()
         if parallel:
             best_score, pv = self.engine.parallel_search(self.board, self.depth)
         else:
-            best_score, pv = self.engine.iterative_deepening(self.board, self.depth)
-            #best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
+            #best_score, pv = self.engine.iterative_deepening(self.board, self.depth)
+            best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
         end = time.time()
         print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
         print("bestmove " + str(pv[0]))
 
 
     def selfPlay_handler(self, args):
-        pass
+        while not self.board.is_game_over():
+            start = time.time()
+            best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
+            end = time.time()
+            print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
+            self.board.push(pv[0])
+
+    
+    def selfPlay_parallel_handler(self, args):
+        while not self.board.is_game_over():
+            try:
+                move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+                print("info using book move")
+                print("bestmove " + str(move))
+                self.board.push(move)
+
+            except:
+                best_score, pv = self.engine.parallel_search(self.board, self.depth)
+                print('bestmove ' + str(pv[0]))
+                self.board.push(pv[0])
+
+        
 
 
 def main() -> None:

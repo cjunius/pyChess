@@ -23,10 +23,8 @@ python main.py
   - sets the position of the chess board from a known fen or starting position
 - isready
   - returns "readyok"
-- setoption depth <depth>
-  - sets the search depth
-- go
-  - returns the next move
+- go [depth <depth>]
+  - returns the next move with an optional search depth (default=5)
 - quit
   - exits the program
 
@@ -40,8 +38,8 @@ python main.py
   - returns the list of legal moves for the current position
 - printMoveStack
   - returns the list of moves in the board's move stack
-- go_parallel
-  - returns the next move using parallel processing
+- go_parallel [depth <depth>]
+  - returns the next move using parallel processing with an optional search depth (default=5)
 
 ## Chess Engine
 
@@ -119,20 +117,20 @@ python main.py
   - Skewers
 - Classic Games
 
-## Performance Results on my crappy system
+## Performance Results
 
 ### Single Process for depth 2 to 6 from starting position
 
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.20219159126281738
-- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.2972705364227295
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 1.1590549945831299
-- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 9.515662431716919
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 74.66997766494751
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.21019816398620605
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.31528592109680176
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 1.162055492401123
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 9.679795265197754
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 60.78723621368408
 
-### Parallel Processes for depth 2 to 6 from starting position (Processes = 6)
+### Parallel Processes for depth 2 to 6 from starting position (Processes = 11)
 
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.18416738510131836
-- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.28125619888305664
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.6846230030059814
-- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 17.19064974784851
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 41.901145935058594
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.2942671775817871
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.3848557472229004
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.7356688976287842
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 12.785161256790161
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 32.21928000450134

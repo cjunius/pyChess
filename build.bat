@@ -1,0 +1,1 @@
+pyinstaller --onedir --workpath ./build --distpath ./dist --specpath ./build -n chess-engine ./main.py

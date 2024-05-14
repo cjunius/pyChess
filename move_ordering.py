@@ -2,11 +2,7 @@ from chess import Move
 
 from evaluation import PIECE_VALUES
 
-class BaseMoveOrdering(object):
-    def __init__(self):
-        pass
-
-class ChecksCapturesOrderMixin(BaseMoveOrdering):
+class ChecksCapturesOrderMixin(object):
     def order_moves(self, board):
         checks = []
         captures = []
@@ -29,7 +25,8 @@ class ChecksCapturesOrderMixin(BaseMoveOrdering):
 
         return checks + captures + non_captures
     
-    def mvvlva(self, board, m: Move):
+
+    def mvvlva(self, board, m: Move) -> float:
         attacker = board.piece_at(m.from_square)
         victim = board.piece_at(m.to_square)
         if victim:

@@ -1,8 +1,9 @@
 import random
 from typing import List
-from chess import Move
+from chess import Move, polyglot
 
 class BaseSearch(object):
+
     def stop_signal(self):
         return False
     
@@ -24,7 +25,8 @@ class RandomMixin(BaseSearch):
 
 
 class NegamaxMixin(BaseSearch):
-    def search(self, board, alpha, beta, depth, ply=0):
+
+    def search(self, board, alpha: float, beta: float, depth: float, ply: float=0) -> tuple[float, list[Move]]:
 
         if depth <= 0 or board.is_game_over():
             if board.is_checkmate():
@@ -67,6 +69,7 @@ class NegamaxMixin(BaseSearch):
         return alpha, pv
     
 class QuiescenceSearchMixin(BaseSearch):
+    q_hash_table = {}  
 
     def evaluate_leaf_node(self, board, alpha: int, beta: int, depth: int) -> int:
         if board.is_game_over():
@@ -76,29 +79,21 @@ class QuiescenceSearchMixin(BaseSearch):
                 return 0 - depth
             
         if board.is_repetition():
-            return 0
-
+            return 0   
+        
         stand_pat = self.evaluate(board)
         if stand_pat >= beta:
             return beta
+        
+        #Delta Pruning
+        BIG_DELTA = 900 #Queen Value
+        if stand_pat < alpha - BIG_DELTA:
+            return alpha
+
         alpha = max(alpha, stand_pat)
 
-        def order_moves_quiescence() -> List[Move]:
-            captures = []
-            for move in board.legal_moves:
-                if board.gives_check(move):
-                    captures.append(move)
-                elif board.is_capture(move):
-                    captures.append(move)
-                elif not move.promotion == None:
-                    captures.append(move)
-
-            return captures
-
-        moves = order_moves_quiescence()
+        moves = self.order_moves_quiescence(board)
         for move in moves:
-
-            #ToDo: Delta Pruning
 
             board.push(move)
             score = -self.evaluate_leaf_node(board, -beta, -alpha, depth-1)
@@ -109,5 +104,11 @@ class QuiescenceSearchMixin(BaseSearch):
             alpha = max(alpha, score)
 
         return alpha
+
+
+    def order_moves_quiescence(self, board) -> List[Move]:
+            moves = list(board.legal_moves)
+            captures = filter(lambda x: board.is_capture(x), moves)
+            return captures
     
     

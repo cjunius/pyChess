@@ -76,20 +76,20 @@ class BaseEvaluation(object):
 
 class PieceValueMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
-        score = super(PieceValueMixin, self).evaluate(board)
+        score: int = super(PieceValueMixin, self).evaluate(board)
         for piece in chess.PIECE_TYPES:
-            pieces_mask = board.pieces_mask(piece, board.turn)
-            score += chess.popcount(pieces_mask) * PIECE_VALUES[piece]
+            pieces_mask_turn = board.pieces_mask(piece, board.turn)
+            score += chess.popcount(pieces_mask_turn) * PIECE_VALUES[piece]
 
-            pieces_mask = board.pieces_mask(piece, not board.turn)
-            score -= chess.popcount(pieces_mask) * PIECE_VALUES[piece]
+            pieces_mask_not_turn = board.pieces_mask(piece, board.turn ^ 1)
+            score -= chess.popcount(pieces_mask_not_turn) * PIECE_VALUES[piece]
 
         return score
     
 
 class PieceSquareTableMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
-        parent_score = super(PieceSquareTableMixin, self).evaluate(board)
+        parent_score: int = super(PieceSquareTableMixin, self).evaluate(board)
         score = 0
         for piece in chess.PIECE_TYPES:
             for square in board.pieces(piece, chess.WHITE):
@@ -103,21 +103,20 @@ class PieceSquareTableMixin(BaseEvaluation):
 
 class PieceValueSquareTableMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
-        parent_score = super(PieceValueSquareTableMixin, self).evaluate(board)
+        parent_score: int = super(PieceValueSquareTableMixin, self).evaluate(board)
         score = 0
         for piece in chess.PIECE_TYPES:
             for square in board.pieces(piece, chess.WHITE):
                 score += PIECE_SQUARE_TABLES[piece][square] + PIECE_VALUES[piece]
             for square in board.pieces(piece, chess.BLACK):
                 score -= PIECE_SQUARE_TABLES[piece][square ^ 56] + PIECE_VALUES[piece]
-        if not board.turn: #Black to Move
+        if board.turn ^ 1: #Black to Move
             score = -score
-        return parent_score + score
-
+        return score + parent_score
 
 class MobilityMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
-        parent_score = super(MobilityMixin, self).evaluate(board)
+        parent_score: int = super(MobilityMixin, self).evaluate(board)
         if len(list(board.move_stack)) == 0:
             return 0
 
@@ -130,11 +129,11 @@ class MobilityMixin(BaseEvaluation):
 
 class BoardControlEvaluationMixin(BaseEvaluation):
     def evaluate(self, board) -> int:
-        eval = super(BoardControlEvaluationMixin, self).evaluate(board)
+        eval: int = super(BoardControlEvaluationMixin, self).evaluate(board)
         for square in chess.SquareSet(board.occupied_co[board.turn]):
             eval += len(board.attacks(square))
 
-        for square in chess.SquareSet(board.occupied_co[not board.turn]):
+        for square in chess.SquareSet(board.occupied_co[board.turn ^ 1]):
             eval -= len(board.attacks(square))
 
         return eval
