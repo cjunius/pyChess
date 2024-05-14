@@ -117,20 +117,22 @@ python main.py
   - Skewers
 - Classic Games
 
-## Performance Results
+## Performance Results on a Macbook Pro M1
 
-### Single Process for depth 2 to 6 from starting position
+### Single Process from starting position
 
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.21019816398620605
-- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.31528592109680176
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 1.162055492401123
-- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 9.679795265197754
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 60.78723621368408
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.008128881454467773
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.03927803039550781
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.14339184761047363
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 1.422001838684082
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 10.046779870986938
+- info score 35 pv [Move.from_uci('e2e4'), Move.from_uci('b8c6'), Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('e4e5'), Move.from_uci('f6d5'), Move.from_uci('b1c3')] time 214.95130610466003
 
-### Parallel Processes for depth 2 to 6 from starting position (Processes = 11)
+### Parallel Processes from starting position
 
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.2942671775817871
-- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.3848557472229004
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.7356688976287842
-- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 12.785161256790161
-- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 32.21928000450134
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6')] time 0.13646221160888672
+- info score 50 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3')] time 0.15276002883911133
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6')] time 0.2571988105773926
+- info score 40 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4')] time 2.9780540466308594
+- info score 0 pv [Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('b1c3'), Move.from_uci('b8c6'), Move.from_uci('e2e4'), Move.from_uci('e7e5')] time 10.565109968185425
+- info score 35 pv [Move.from_uci('e2e4'), Move.from_uci('b8c6'), Move.from_uci('g1f3'), Move.from_uci('g8f6'), Move.from_uci('e4e5'), Move.from_uci('f6d5'), Move.from_uci('b1c3')] time 429.6187961101532

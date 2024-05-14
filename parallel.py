@@ -35,6 +35,7 @@ class ParallelSearchMixin(BaseParallel):
                 
         return best_score, pv
     
+    
     def call_search_move(self, move) -> tuple[float, list[Move]]:
             self.board.push(move)
             score, pv = self.search(self.board, -99999, 99999, self.depth-1)

@@ -91,6 +91,7 @@ class UCI:
     def go_handler(self, parallel: bool, args):
         print("info starting search")
         
+
         # try:
         #     move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
         #     print("info using book move")
@@ -135,7 +136,7 @@ class UCI:
                 print('bestmove ' + str(pv[0]))
                 self.board.push(pv[0])
 
-        
+        print(str(self.board.result()))
 
 
 def main() -> None:
@@ -145,7 +146,6 @@ def main() -> None:
         if not command == "quit":
             uic.processCommand(command)
         else:
-            break
 
 
 if __name__ == "__main__":
