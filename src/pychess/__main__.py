@@ -170,7 +170,10 @@ def main() -> None:
     signal.signal(signal.SIGINT, lambda *_: sys.exit(0))
     uci = UCI()
     while True:
-        command = input()
+        try:
+            command = input()
+        except EOFError:
+            break
         if command == "quit":
             break
         uci.process_command(command)
