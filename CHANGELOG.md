@@ -19,7 +19,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packaging: `src/pychess/` layout, `pyproject.toml`, `pychess` console script,
   `py.typed`.
 - Tooling: Ruff (lint + format), Mypy, pytest-cov (85% gate), `pre-commit`, all
-  run in CI on Python 3.12 and 3.13.
+  run in CI on Python 3.12 and 3.13, with Codecov coverage + test-analytics
+  uploads.
 - `perft` regression tests against published node counts; unit tests for every
   module.
 
