@@ -13,6 +13,7 @@ import argparse
 from pathlib import Path
 
 import chess
+
 try:
     from PIL import Image, ImageDraw, ImageFont
 except ImportError as exc:
@@ -80,15 +81,16 @@ def _material_note(board: chess.Board) -> str:
     mag = abs(diff)
     if mag < 2:
         return ""
-
-    side = "White" if diff > 0 else "Black"
+    # The verdict line already names the side that is winning, so this is just
+    # the piece amount - keep it short so it fits the frame.
     if mag == 2:
-        return f", {side} up two pawns"
+        return ", up two pawns"
     if mag < 5:
-        return f", {side} up a piece"
+        return ", up a piece"
     if mag < 8:
-        return f", {side} up a rook"
-    return f", {side} up a queen"
+        return ", up a rook"
+    return ", up a queen"
+
 
 def _render(title: str, subtitle: str, board: chess.Board) -> Image.Image:
     img = Image.new("RGB", (WIDTH, HEIGHT), BG)
