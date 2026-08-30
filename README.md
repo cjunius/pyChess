@@ -7,12 +7,14 @@
 [![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A UCI chess engine in Python. `Negamax` (fail-soft alpha-beta with a
-check-aware quiescence search) is the core; it takes an evaluator, a move
-orderer, a transposition table, and a clock as constructor arguments.
+check-aware quiescence search, null-move pruning, late move reductions, and
+principal variation search) is the core; it takes an evaluator, a move orderer,
+a transposition table, and a clock as constructor arguments.
 `lazy_smp.search` runs one iterative-deepening `Negamax` per worker process
 against a shared-memory transposition table and returns the deepest completed
 line. Evaluation is PeSTO - tapered mid/endgame piece-square tables kept as an
-incremental accumulator on the board. See [docs/design.md](docs/design.md) for
+incremental accumulator - plus hand-crafted terms (pawn structure, king safety,
+bishop pair, rook files, outposts). See [docs/design.md](docs/design.md) for
 the full feature list and backlog.
 
 ![pychess playing itself](docs/self-play.gif)
@@ -21,16 +23,16 @@ the full feature list and backlog.
 
 ## Estimated Engine Strength
 
-Around **1800–2000 Elo** at blitz, most likely ~1900. This is a feature-based
+Around **1950–2150 Elo** at blitz, most likely ~2050. This is a feature-based
 estimate from the search and evaluation, **not a measured result** - no games
 against rated opposition have been run yet.
 
 | Time control | Estimate | Why |
 |---|---|---|
-| Bullet (1+0) | ~1600–1750 | Python per-move overhead dominates. |
-| Blitz (3+2 / 5+3) | ~1850–2000 | Reaches depth 6–8. |
-| Rapid / Classical | ~2000–2150 | Reaches depth 9–10+; PeSTO scales well with depth. |
-| Lichess bot pool | ~1950–2200 blitz | Bot ratings there tend to run higher than CCRL. |
+| Bullet (1+0) | ~1750–1900 | Python per-move overhead dominates. |
+| Blitz (3+2 / 5+3) | ~1950–2150 | Reaches depth 8–10. |
+| Rapid / Classical | ~2150–2300 | Reaches depth 11–13+; a PST-based eval scales well with depth. |
+| Lichess bot pool | ~2050–2300 blitz | Bot ratings there tend to run higher than CCRL. |
 
 See [docs/engine-strength.md](docs/engine-strength.md) for how the number is
 derived, calibration against known engines, and how to turn it into a measured
@@ -73,6 +75,7 @@ pychess/
 │   ├── negamax.py         Negamax - fail-soft negamax + quiescence over injected pieces
 │   ├── move_ordering.py   MoveOrderer - TT move / MVV-LVA / killers / history
 │   ├── evaluation.py      PeSTO tables + PestoEvaluator
+│   ├── eval_terms.py      positional terms (pawn structure, king safety, bishop pair, …)
 │   ├── eval_board.py      EvalBoard - chess.Board with an incremental eval accumulator
 │   ├── transposition.py   TranspositionTable - in-process dict
 │   ├── shared_tt.py       SharedTT / SharedFlag - lock-free shared-memory table

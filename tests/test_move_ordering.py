@@ -39,6 +39,24 @@ def test_killer_move_beats_other_quiets():
     assert quiets[0] == killer
 
 
+def test_is_killer_tracks_recorded_killers():
+    orderer = MoveOrderer()
+    killer = chess.Move.from_uci("h2h3")
+    assert not orderer.is_killer(0, killer)
+    orderer.record_killer(0, killer)
+    assert orderer.is_killer(0, killer)
+    assert not orderer.is_killer(1, killer)
+
+
+def test_history_score_reflects_recorded_cutoffs():
+    board = chess.Board()
+    orderer = MoveOrderer()
+    move = chess.Move.from_uci("g1f3")
+    assert orderer.history_score(board, move) == 0
+    orderer.record_history(board, move, depth=4)
+    assert orderer.history_score(board, move) == 16
+
+
 def test_mvvlva_prefers_taking_the_bigger_piece():
     # White pawn on d4 could take either rook on c5 / e5.
     board = chess.Board("3qk3/8/8/2r1r3/3P4/8/8/3QK3 w - - 0 1")

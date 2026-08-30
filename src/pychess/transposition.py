@@ -1,7 +1,7 @@
 import chess
 from chess.polyglot import zobrist_hash
 
-from .constants import MATE_GUARD, TT_EXACT, TT_LOWER, TT_UPPER
+from .constants import TT_EXACT, TT_LOWER, TT_UPPER, tt_probe_score, tt_store_score
 
 # (depth, value, flag, move)
 _Entry = tuple[int, int, int, "chess.Move | None"]
@@ -14,6 +14,9 @@ class TranspositionTable:
     table used for single-threaded search and tests; Lazy SMP uses
     ``shared_tt.SharedTT``, which exposes the same
     ``key`` / ``probe`` / ``store`` interface over shared memory.
+
+    ``probe`` / ``store`` take the current ``ply`` so mate scores can be
+    rebased between the root and the storing node (see ``constants``).
     """
 
     def __init__(self) -> None:
@@ -26,7 +29,7 @@ class TranspositionTable:
         return zobrist_hash(board)
 
     def probe(
-        self, key: int, depth: int, alpha: int, beta: int
+        self, key: int, depth: int, alpha: int, beta: int, ply: int = 0
     ) -> tuple[bool, int, chess.Move | None]:
         """Return ``(cutoff, value, move)``.
 
@@ -39,17 +42,26 @@ class TranspositionTable:
             return False, 0, None
 
         e_depth, e_value, e_flag, e_move = entry
-        if e_depth >= depth and abs(e_value) < MATE_GUARD:
+        if e_depth >= depth:
+            value = tt_probe_score(e_value, ply)
             if e_flag == TT_EXACT:
-                return True, e_value, e_move
-            if e_flag == TT_LOWER and e_value >= beta:
-                return True, e_value, e_move
-            if e_flag == TT_UPPER and e_value <= alpha:
-                return True, e_value, e_move
+                return True, value, e_move
+            if e_flag == TT_LOWER and value >= beta:
+                return True, value, e_move
+            if e_flag == TT_UPPER and value <= alpha:
+                return True, value, e_move
         return False, 0, e_move
 
-    def store(self, key: int, depth: int, value: int, flag: int, move: chess.Move | None) -> None:
+    def store(
+        self,
+        key: int,
+        depth: int,
+        value: int,
+        flag: int,
+        move: chess.Move | None,
+        ply: int = 0,
+    ) -> None:
         existing = self._table.get(key)
         if existing is not None and existing[0] > depth:
             return  # keep the deeper analysis
-        self._table[key] = (depth, value, flag, move)
+        self._table[key] = (depth, tt_store_score(value, ply), flag, move)

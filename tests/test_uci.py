@@ -7,6 +7,7 @@ import pytest
 
 from pychess import __main__ as cli
 from pychess.__main__ import UCI, main
+from pychess.constants import MATE
 from pychess.engine import RandomEngine
 from pychess.lazy_smp import SearchResult
 from pychess.types import GoLimits
@@ -125,6 +126,33 @@ class TestProcessCommand:
         monkeypatch.setattr(session, "book_move", lambda: next(calls))
         session.process_command("selfPlay")
         assert session.board.move_stack[0].uci() == "e2e4"
+
+
+class _FixedEngine:
+    """Returns a preset SearchResult, to exercise ``info`` formatting."""
+
+    def __init__(self, result: SearchResult) -> None:
+        self._result = result
+
+    def search(self, board: chess.Board, limits: GoLimits | None = None) -> SearchResult:
+        return self._result
+
+
+class TestScoreField:
+    def test_centipawns(self):
+        assert UCI._score_field(53) == "score cp 53"
+        assert UCI._score_field(-120) == "score cp -120"
+
+    def test_mate_in_moves_is_signed(self):
+        assert UCI._score_field(MATE - 1) == "score mate 1"  # 1 ply -> mate in 1
+        assert UCI._score_field(MATE - 3) == "score mate 2"  # 3 plies -> mate in 2
+        assert UCI._score_field(-(MATE - 4)) == "score mate -2"  # getting mated
+
+    def test_go_reports_mate_score(self, uci, capsys):
+        uci.engine = _FixedEngine(SearchResult(MATE - 3, [chess.Move.from_uci("a1a2")], 5, 10, 0.0))
+        uci.process_command("position fen 7k/8/5K2/8/8/8/8/R7 w - - 0 1")
+        uci.process_command("go depth 5")
+        assert "score mate 2" in capsys.readouterr().out
 
 
 class TestBookMove:
