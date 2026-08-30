@@ -25,6 +25,14 @@ _ENTRY = struct.Struct("<QQ")
 _U64 = (1 << 64) - 1
 
 
+def _buffer(shm: shared_memory.SharedMemory) -> memoryview:
+    """Return the segment's buffer, which is ``None`` only once it is closed."""
+    buf = shm.buf
+    if buf is None:  # pragma: no cover - a live segment always has a buffer
+        raise RuntimeError("shared memory segment is closed")
+    return buf
+
+
 def _pack_move(move: chess.Move | None) -> int:
     if move is None:
         return 0
@@ -74,7 +82,7 @@ class SharedTT:
         self, key: int, depth: int, alpha: int, beta: int
     ) -> tuple[bool, int, chess.Move | None]:
         off = (key & self.mask) * ENTRY_SIZE
-        word0, data = _ENTRY.unpack_from(self.shm.buf, off)
+        word0, data = _ENTRY.unpack_from(_buffer(self.shm), off)
         if data == 0 or (word0 ^ data) != key:
             return False, 0, None
         move, score, e_depth, flag = _unpack_data(data)
@@ -89,11 +97,11 @@ class SharedTT:
 
     def store(self, key: int, depth: int, score: int, flag: int, move: chess.Move | None) -> None:
         off = (key & self.mask) * ENTRY_SIZE
-        word0, old = _ENTRY.unpack_from(self.shm.buf, off)
+        word0, old = _ENTRY.unpack_from(_buffer(self.shm), off)
         if old and (word0 ^ old) == key and _unpack_data(old)[2] > depth:
             return  # keep the deeper entry for this position
         data = _pack_data(move, score, depth, flag)
-        _ENTRY.pack_into(self.shm.buf, off, (key ^ data) & _U64, data)
+        _ENTRY.pack_into(_buffer(self.shm), off, (key ^ data) & _U64, data)
 
     def close(self) -> None:
         with contextlib.suppress(Exception):
@@ -110,16 +118,16 @@ class SharedFlag:
     def __init__(self, name: str | None = None, create: bool = True) -> None:
         if create:
             self.shm = shared_memory.SharedMemory(create=True, size=1)
-            self.shm.buf[0] = 0
+            _buffer(self.shm)[0] = 0
         else:
             self.shm = shared_memory.SharedMemory(name=name)
         self.name = self.shm.name
 
     def set(self) -> None:
-        self.shm.buf[0] = 1
+        _buffer(self.shm)[0] = 1
 
     def is_set(self) -> bool:
-        return self.shm.buf[0] != 0
+        return _buffer(self.shm)[0] != 0
 
     def close(self) -> None:
         with contextlib.suppress(Exception):
