@@ -15,6 +15,10 @@ line. Evaluation is PeSTO - tapered mid/endgame piece-square tables kept as an
 incremental accumulator on the board. See [docs/design.md](docs/design.md) for
 the full feature list and backlog.
 
+![pychess playing itself](docs/self-play.gif)
+
+*Self-play at 5 s/move - every move a real search, no opening book.*
+
 ## Estimated Engine Strength
 
 Around **1800–2000 Elo** at blitz, most likely ~1900. This is a feature-based
