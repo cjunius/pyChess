@@ -26,7 +26,7 @@ from .types import GoLimits
 SMP_TT_SLOTS = 1 << 20  # 1M entries * 16 bytes = 16 MB
 
 # The pickled payload each worker process receives.
-_Payload = tuple[str, list[str], list[str] | None, int, float, str, int, int, str]
+_Payload = tuple[str, list[str], list[str] | None, int, float, int | None, str, int, int, str]
 
 
 class _WorkerResult(NamedTuple):
@@ -54,9 +54,18 @@ def _worker(payload: _Payload) -> _WorkerResult:
     they populate the shared table along slightly different paths; the shared
     entries then speed up every other worker.
     """
-    (root_fen, moves, root_slice, max_depth, deadline, tt_name, tt_slots, worker_id, stop_name) = (
-        payload
-    )
+    (
+        root_fen,
+        moves,
+        root_slice,
+        max_depth,
+        deadline,
+        node_limit,
+        tt_name,
+        tt_slots,
+        worker_id,
+        stop_name,
+    ) = payload
 
     tt = SharedTT(slots=tt_slots, name=tt_name, create=False)
     stop = SharedFlag(name=stop_name, create=False)
@@ -69,7 +78,7 @@ def _worker(payload: _Payload) -> _WorkerResult:
     if root_slice is not None:
         root_moves = {chess.Move.from_uci(u) for u in root_slice}
 
-    clock = Clock(deadline=deadline, stop_flag=stop)
+    clock = Clock(deadline=deadline, node_limit=node_limit, stop_flag=stop)
     searcher = Negamax(PestoEvaluator(), MoveOrderer(root_moves=root_moves), tt, clock)
 
     best = _WorkerResult(0, [], 0, 0)
@@ -131,8 +140,20 @@ def search(
 
     tt = SharedTT(slots=tt_slots, create=True)
     stop = SharedFlag(create=True)
+    node_limit = limits.get("nodes")
     payloads: list[_Payload] = [
-        (root_fen, moves, slices[i], max_depth, deadline, tt.name, tt.slots, i, stop.name)
+        (
+            root_fen,
+            moves,
+            slices[i],
+            max_depth,
+            deadline,
+            node_limit,
+            tt.name,
+            tt.slots,
+            i,
+            stop.name,
+        )
         for i in range(n_workers)
     ]
     try:

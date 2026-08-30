@@ -32,6 +32,11 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `SearchResult` and `__main__` does all formatting.
 - License changed to Apache-2.0.
 
+### Fixed
+
+- `go nodes N` now enforces the node limit in Lazy SMP workers; previously the
+  limit was parsed but never passed to `Clock`.
+
 ### Removed
 
 - The single-process search path; `go` always runs Lazy SMP.

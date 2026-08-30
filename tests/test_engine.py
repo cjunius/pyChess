@@ -38,6 +38,7 @@ def test_worker_runs_a_search_in_process():
             None,
             3,
             time.time() + 5.0,
+            None,
             tt.name,
             tt.slots,
             0,
