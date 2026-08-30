@@ -113,7 +113,8 @@ def search(
     start = time.time()
 
     n_workers = max(1, multiprocessing.cpu_count() - 1)
-    deadline = deadline_from_limits(board, limits, start) or (start + DEFAULT_MOVETIME)
+    deadline = deadline_from_limits(board, limits, start)
+    deadline = deadline if deadline is not None else float("inf")
     max_depth = min(int(limits.get("depth") or MAX_DEPTH), MAX_DEPTH)
 
     root_fen = board.root().fen()
