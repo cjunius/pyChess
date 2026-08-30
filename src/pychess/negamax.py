@@ -124,15 +124,15 @@ class Negamax:
         if ply and not (self.nodes & 4095) and self.clock.should_stop(self.nodes):
             raise SearchAbortError
 
-        if ply and claims_draw(board):
-            return self._draw_score(), []
-
         if depth <= 0 or board.is_game_over():
             if board.is_checkmate():
                 return -(MATE - ply), []
             if is_drawn(board):
                 return self._draw_score(), []
             return self.quiesce(board, alpha, beta, 0, ply), []
+
+        if ply and claims_draw(board):
+            return self._draw_score(), []
 
         if ply:
             # Mate-distance pruning: this node can do no better than mating now
