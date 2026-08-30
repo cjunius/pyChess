@@ -79,6 +79,7 @@ def _worker(payload: _Payload) -> _WorkerResult:
         root_moves = {chess.Move.from_uci(u) for u in root_slice}
 
     clock = Clock(deadline=deadline, node_limit=node_limit, stop_flag=stop)
+    clock.arm()
     searcher = Negamax(PestoEvaluator(), MoveOrderer(root_moves=root_moves), tt, clock)
 
     best = _WorkerResult(0, [], 0, 0)
@@ -88,7 +89,6 @@ def _worker(payload: _Payload) -> _WorkerResult:
                 score, pv = searcher.search(board, -INF, INF, depth)
             except SearchAbortError:
                 break
-            clock.arm()
             best = _WorkerResult(score, [m.uci() for m in pv], depth, searcher.nodes)
             if stop.is_set() or time.time() >= deadline:
                 break
