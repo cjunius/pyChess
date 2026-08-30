@@ -153,7 +153,7 @@ class Negamax:
         # --- Null-move pruning ------------------------------------------------
         if (
             self._null_ok(board, depth, can_null, ply)
-            and beta < MATE_IN_MAX
+            and abs(beta) < MATE_IN_MAX
             and self.evaluator.evaluate(board) >= beta
         ):
             r = 2 + (depth > NULL_DEEP_DEPTH)
