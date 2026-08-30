@@ -1,6 +1,7 @@
 import time, sys, signal, multiprocessing
 
 from chess import Board, polyglot
+from eval_board import EvalBoard
 from engines import NegamaxEngine
 from multiprocessing.pool import Pool
 from operator import itemgetter
@@ -10,10 +11,16 @@ def catchKeyboardInterrupt(signal, frame):
     sys.exit(0)
 signal.signal(signal.SIGINT, catchKeyboardInterrupt)
 
+# UCI "go" parameters that take a single integer argument.
+GO_INT_PARAMS = {"depth", "nodes", "movetime",
+                 "wtime", "btime", "winc", "binc", "movestogo"}
+
+BOOK_PATH = "opening_book/bookfish.bin"
+
 
 class UCI:
     def __init__(self) -> None:
-        self.board = Board()
+        self.board = EvalBoard()
         self.engine = NegamaxEngine()
         self.depth = 4
 
@@ -34,7 +41,8 @@ class UCI:
             case "register":
                 pass
             case "ucinewgame":
-                self.board = Board()
+                self.board = EvalBoard()
+                self.engine = NegamaxEngine()
             case "position":
                 self.position_handler(args)
             case "go":
@@ -57,8 +65,7 @@ class UCI:
                 moves = [replay.san_and_push(m) for m in self.board.move_stack]
                 print(str(moves))
             case "perft":
-                #return self.perft_handler(args)
-                pass
+                self.perft_handler(args)
             case "selfPlay":
                 self.selfPlay_handler(args)
             case "selfPlay_parallel":
@@ -68,15 +75,16 @@ class UCI:
 
     
     def position_handler(self, args):
-        
-        if args[1] == "fen":
-            fen_string = args[2]
-            for i in range(3, 8):
-                fen_string += " " + args[i]
 
-            self.board = Board(fen_string)  
+        if len(args) > 1 and args[1] == "fen":
+            try:
+                moves_idx = args.index("moves")
+                fen_string = " ".join(args[2:moves_idx])
+            except ValueError:
+                fen_string = " ".join(args[2:])
+            self.board = EvalBoard(fen_string)
         else:
-            self.board = Board()
+            self.board = EvalBoard()
 
         moves_found = False
         for i in range(1, len(args)):
@@ -84,65 +92,101 @@ class UCI:
             if moves_found:
                 self.board.push_uci(args[i])
             else:
-                if args[i] == "moves": 
+                if args[i] == "moves":
                     moves_found = True
+
+
+    def parse_go(self, args) -> dict:
+        limits = {}
+        i = 1
+        while i < len(args):
+            token = args[i]
+            if token in GO_INT_PARAMS and i + 1 < len(args):
+                try:
+                    limits[token] = int(args[i + 1])
+                except ValueError:
+                    pass
+                i += 2
+            elif token == "infinite":
+                limits["infinite"] = True
+                i += 1
+            else:
+                i += 1
+        return limits
+
+
+    def book_move(self):
+        """Return a Polyglot book move for the current position, or None."""
+        try:
+            with polyglot.MemoryMappedReader(BOOK_PATH) as reader:
+                return reader.weighted_choice(self.board).move
+        except (IndexError, FileNotFoundError, OSError):
+            return None
+
+
+    def perft_handler(self, args):
+        depth = int(args[1]) if len(args) > 1 else 4
+        nodes, elapsed = perft(self.board, depth)
+        print("info depth {} nodes {} time {}".format(depth, nodes, elapsed))
 
 
     def go_handler(self, parallel: bool, args):
         print("info starting search")
-        
 
-        try:
-            move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+        move = self.book_move()
+        if move is not None:
             print("info using book move")
-            print("bestmove " + str(move))
+            print("bestmove " + move.uci())
             return
-        
-        except:
-            pass
 
-        if len(args) > 1 and args[1] == "depth":
-            self.depth = int(args[2])
+        limits = self.parse_go(args)
         start = time.time()
         if parallel:
-            best_score, pv = self.engine.parallel_search(self.board, self.depth)
+            best_score, pv = self.engine.parallel_search(self.board, limits)
         else:
-            #best_score, pv = self.engine.iterative_deepening(self.board, self.depth)
-            best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
+            best_score, pv = self.engine.search_with_time(self.board, limits)
         end = time.time()
-        print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
-        print("bestmove " + str(pv[0]))
+        pv_uci = " ".join(m.uci() for m in pv)
+        print('info score {} pv {} time {}'.format(best_score, pv_uci, end - start))
+        print("bestmove " + (pv[0].uci() if pv else "0000"))
 
 
     def selfPlay_handler(self, args):
         while not self.board.is_game_over():
-            try:
-                move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
-                print("bestmove " + str(move))
+            move = self.book_move()
+            if move is not None:
+                print("info using book move")
+                print("bestmove " + move.uci())
                 self.board.push(move)
-            except:
-                start = time.time()
-                best_score, pv = self.engine.search(self.board, -99999, 99999, self.depth)
-                end = time.time()
-                print('info score {} pv {} time {}'.format(str(best_score), str(pv), str(end-start)))
-                print("bestmove {}".format(pv[0]))
-                self.board.push(pv[0])
-        
+                continue
+
+            start = time.time()
+            best_score, pv = self.engine.search_with_time(self.board, {"depth": self.depth})
+            end = time.time()
+            if not pv:
+                break
+            print('info score {} pv {} time {}'.format(
+                best_score, " ".join(m.uci() for m in pv), end - start))
+            print("bestmove " + pv[0].uci())
+            self.board.push(pv[0])
+
         print(str(self.board.result()))
 
-    
+
     def selfPlay_parallel_handler(self, args):
         while not self.board.is_game_over():
-            try:
-                move = polyglot.MemoryMappedReader("opening_book/bookfish.bin").weighted_choice(self.board).move
+            move = self.book_move()
+            if move is not None:
                 print("info using book move")
-                print("bestmove " + str(move))
+                print("bestmove " + move.uci())
                 self.board.push(move)
+                continue
 
-            except:
-                best_score, pv = self.engine.parallel_search(self.board, self.depth)
-                print('bestmove ' + str(pv[0]))
-                self.board.push(pv[0])
+            best_score, pv = self.engine.parallel_search(self.board, {"depth": self.depth})
+            if not pv:
+                break
+            print('bestmove ' + pv[0].uci())
+            self.board.push(pv[0])
 
         print(str(self.board.result()))
 
