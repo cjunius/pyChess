@@ -13,7 +13,12 @@ import argparse
 from pathlib import Path
 
 import chess
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError as exc:
+    raise SystemExit(
+        "Pillow is required to run tools/self_play_gif.py; install it with `pip install pillow`."
+    ) from exc
 
 from pychess.constants import MATE, MATE_IN_MAX
 from pychess.engine import Engine
