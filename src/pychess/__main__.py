@@ -10,6 +10,7 @@ import chess
 from chess import polyglot
 
 from . import __version__
+from .constants import MATE, MATE_IN_MAX
 from .engine import Engine, SupportsSearch
 from .eval_board import EvalBoard
 from .lazy_smp import SearchResult
@@ -120,11 +121,21 @@ class UCI:
         except IndexError, FileNotFoundError, OSError:
             return None
 
+    @staticmethod
+    def _score_field(score: int) -> str:
+        """UCI ``score`` token: ``mate N`` (full moves, signed) near mate,
+        ``cp N`` otherwise. Mate scores are distance-to-mate from the root."""
+        if abs(score) < MATE_IN_MAX:
+            return f"score cp {score}"
+        plies = MATE - abs(score)
+        moves = (plies + 1) // 2
+        return f"score mate {moves if score > 0 else -moves}"
+
     def print_info(self, result: SearchResult) -> None:
         """Format one UCI ``info`` line from a SearchResult."""
         pv = " ".join(m.uci() for m in result.pv)
         print(
-            f"info depth {result.depth} score cp {result.score} "
+            f"info depth {result.depth} {self._score_field(result.score)} "
             f"nodes {result.nodes} time {round(result.elapsed, 3)} pv {pv}"
         )
 

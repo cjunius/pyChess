@@ -2,7 +2,7 @@
 
 import chess
 
-from pychess.constants import INF, MATE_GUARD, TT_EXACT, TT_LOWER, TT_UPPER
+from pychess.constants import INF, MATE, TT_EXACT, TT_LOWER, TT_UPPER
 from pychess.transposition import TranspositionTable
 
 STARTPOS = chess.Board()
@@ -53,10 +53,21 @@ def test_deeper_entry_is_kept_on_store():
     assert tt.probe(key, 3, -INF, INF) == (True, 10, None)
 
 
-def test_mate_scores_are_never_returned_as_a_bound():
+def test_mate_scores_are_returned_and_rebased_by_ply():
     tt = TranspositionTable()
     key = tt.key(STARTPOS)
     move = chess.Move.from_uci("e2e4")
-    tt.store(key, 5, MATE_GUARD + 1, TT_EXACT, move)
-    cutoff, value, got = tt.probe(key, 3, -INF, INF)
-    assert cutoff is False and value == 0 and got == move
+    # A mate 8 plies from the root, found while searching at ply 6 (so 2 plies
+    # away from this node). Stored node-relative, it is MATE - 2.
+    tt.store(key, 5, MATE - 8, TT_EXACT, move, ply=6)
+    assert tt._table[key][1] == MATE - 2
+    # The same position reached at ply 4 is a mate 6 plies from the root.
+    cutoff, value, got = tt.probe(key, 3, -INF, INF, ply=4)
+    assert cutoff is True and value == MATE - 6 and got == move
+
+
+def test_non_mate_scores_ignore_ply():
+    tt = TranspositionTable()
+    key = tt.key(STARTPOS)
+    tt.store(key, 5, 42, TT_EXACT, None, ply=6)
+    assert tt.probe(key, 3, -INF, INF, ply=4) == (True, 42, None)

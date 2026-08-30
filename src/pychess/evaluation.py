@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, cast
 
 import chess
 
+from . import eval_terms
+
 if TYPE_CHECKING:
     from .eval_board import EvalBoard
 
@@ -180,11 +182,29 @@ def taper(mg: int, eg: int, phase: int) -> int:
 
 
 class PestoEvaluator:
-    """Tapered PeSTO evaluation, returned from the side-to-move's perspective.
+    """Tapered PeSTO evaluation plus positional terms, from the side-to-move's
+    perspective.
 
-    Uses the incrementally-maintained accumulator on ``EvalBoard`` when the
-    board provides one, otherwise falls back to a full recompute.
+    The PeSTO piece-square score uses the incrementally-maintained accumulator
+    on ``EvalBoard`` when the board provides one, otherwise a full recompute.
+    The positional terms (``eval_terms``) are recomputed each call; the
+    pure-pawn part is memoised on the pawn bitboards.
     """
+
+    _PAWN_CACHE_CAP = 1 << 16
+
+    def __init__(self) -> None:
+        self._pawn_cache: dict[tuple[int, int], tuple[int, int]] = {}
+
+    def _pawn_structure(self, white_pawns: int, black_pawns: int) -> tuple[int, int]:
+        cached = self._pawn_cache.get((white_pawns, black_pawns))
+        if cached is not None:
+            return cached
+        terms = eval_terms.pawn_structure(white_pawns, black_pawns)
+        if len(self._pawn_cache) >= self._PAWN_CACHE_CAP:
+            self._pawn_cache.clear()
+        self._pawn_cache[(white_pawns, black_pawns)] = terms
+        return terms
 
     def evaluate(self, board: chess.Board) -> int:
         if getattr(board, "_mg", None) is None:
@@ -192,5 +212,12 @@ class PestoEvaluator:
         else:
             acc = cast("EvalBoard", board)
             mg, eg, phase = acc._mg, acc._eg, acc._phase
-        score = taper(mg, eg, phase)
+
+        white_pawns = board.pawns & board.occupied_co[chess.WHITE]
+        black_pawns = board.pawns & board.occupied_co[chess.BLACK]
+        pawn_mg, pawn_eg = self._pawn_structure(white_pawns, black_pawns)
+        pos_mg, pos_eg = eval_terms.positional(board, pawn_mg, pawn_eg)
+
+        score = taper(mg + pos_mg, eg + pos_eg, phase)
+        score += eval_terms.TEMPO if board.turn else -eval_terms.TEMPO
         return score if board.turn else -score

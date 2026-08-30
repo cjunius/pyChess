@@ -65,6 +65,14 @@ class MoveOrderer:
         assert attacker is not None  # the mover always sits on from_square
         return PIECE_VALUES[victim] * 10 - PIECE_VALUES[attacker] // 100
 
+    def is_killer(self, ply: int, move: chess.Move) -> bool:
+        """Whether ``move`` is a recorded killer for this ply."""
+        return move in self.killers.get(ply, ())
+
+    def history_score(self, board: chess.Board, move: chess.Move) -> int:
+        """The history-heuristic score for ``move`` (0 if never seen)."""
+        return self.history.get((board.turn, move.from_square, move.to_square), 0)
+
     # ---- cut-off bookkeeping ------------------------------------------
 
     def record_killer(self, ply: int, move: chess.Move) -> None:

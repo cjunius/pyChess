@@ -18,7 +18,7 @@ from multiprocessing import shared_memory
 import chess
 from chess.polyglot import zobrist_hash
 
-from .constants import MATE_GUARD, TT_EXACT, TT_LOWER, TT_UPPER
+from .constants import TT_EXACT, TT_LOWER, TT_UPPER, tt_probe_score, tt_store_score
 
 ENTRY_SIZE = 16
 _ENTRY = struct.Struct("<QQ")
@@ -79,14 +79,15 @@ class SharedTT:
         return zobrist_hash(board)
 
     def probe(
-        self, key: int, depth: int, alpha: int, beta: int
+        self, key: int, depth: int, alpha: int, beta: int, ply: int = 0
     ) -> tuple[bool, int, chess.Move | None]:
         off = (key & self.mask) * ENTRY_SIZE
         word0, data = _ENTRY.unpack_from(_buffer(self.shm), off)
         if data == 0 or (word0 ^ data) != key:
             return False, 0, None
-        move, score, e_depth, flag = _unpack_data(data)
-        if e_depth >= depth and abs(score) < MATE_GUARD:
+        move, e_score, e_depth, flag = _unpack_data(data)
+        if e_depth >= depth:
+            score = tt_probe_score(e_score, ply)
             if flag == TT_EXACT:
                 return True, score, move
             if flag == TT_LOWER and score >= beta:
@@ -95,12 +96,14 @@ class SharedTT:
                 return True, score, move
         return False, 0, move
 
-    def store(self, key: int, depth: int, score: int, flag: int, move: chess.Move | None) -> None:
+    def store(
+        self, key: int, depth: int, score: int, flag: int, move: chess.Move | None, ply: int = 0
+    ) -> None:
         off = (key & self.mask) * ENTRY_SIZE
         word0, old = _ENTRY.unpack_from(_buffer(self.shm), off)
         if old and (word0 ^ old) == key and _unpack_data(old)[2] > depth:
             return  # keep the deeper entry for this position
-        data = _pack_data(move, score, depth, flag)
+        data = _pack_data(move, tt_store_score(score, ply), depth, flag)
         _ENTRY.pack_into(_buffer(self.shm), off, (key ^ data) & _U64, data)
 
     def close(self) -> None:

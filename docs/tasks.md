@@ -1,83 +1,85 @@
 # Tasks
 
-The next five changes, in the order most likely to gain the most playing
-strength. Each is a self-contained addition to `Negamax.search` /
-`Negamax.quiesce` unless noted.
+The next five changes, roughly in priority order (Elo per unit of effort, and
+how much each compounds with the rest). Each is a self-contained addition to
+`Negamax` / `lazy_smp` / the evaluator unless noted. Elo figures are rough
+community numbers for an engine already at this level - measure, don't trust.
 
-## 1. Null-move pruning
+## 1. Aspiration windows
 
-If giving the opponent a free move (a "null move") still fails high at reduced
-depth (`R = 2..3`), the position is almost certainly a cut-off - return `beta`
-without searching the real moves. Skip it when side-to-move is in check, in a
-likely zugzwang (king + pawns only), or when depth is very low. Add a
-verification search at high depth to avoid zugzwang blunders. Needs a
-`board.push(chess.Move.null())` path and a `_null_ok` guard in the search.
-Typically the single largest Elo jump available (~50-100).
+Iterative deepening currently re-searches every depth with the full
+`(-INF, INF)` window. Instead, open depth `d` with a narrow window around the
+previous iteration's score (`score ± 25`, say); on a fail-high or fail-low
+widen that side (double the delta, or jump to `±INF`) and re-search. Most
+iterations land inside the window and search far fewer nodes. Lives in
+`lazy_smp._worker`'s deepening loop, per worker. Pairs naturally with PVS.
+~15-30 Elo, a small change.
 
-## 2. Principal Variation Search (NegaScout)
+## 2. Shallow-depth pruning (reverse futility, futility, late move pruning)
 
-Search the first (best-ordered) move with the full `(-beta, -alpha)` window,
-then every later move with a null window `(-alpha-1, -alpha)`; only re-search
-with the full window on the rare fail-high. With the move ordering already in
-place (TT move, MVV-LVA, killers, history) the first move is usually best, so
-most nodes get the cheaper scout search. ~20-40 Elo and it compounds with
-everything below.
+At low depth, near the leaves, prune aggressively on the static eval:
 
-## 3. Late Move Reductions (LMR)
+- **Reverse futility / static null move**: if `eval - margin*depth >= beta` at
+  `depth <= ~6` and not in check, return `eval`.
+- **Futility**: at `depth <= ~2`, if `eval + margin < alpha`, skip quiet moves
+  that can't raise alpha.
+- **Late move pruning**: past a depth-dependent move count at low depth, skip
+  the remaining quiet non-checking moves entirely.
 
-Once past the first few moves at a node, search quiet, non-checking, non-TT
-moves at `depth - 1 - reduction` (reduction grows with move index and depth,
-shrink it for killers / good history). Re-search at full depth if the reduced
-search beats `alpha`. Combined with PVS this is usually the biggest tree
-reduction after null-move - effective branching factor drops sharply, so
-iterative deepening reaches 2-4 plies deeper in the same time.
+Never when in check, for captures/promotions, or near mate scores. Big node
+reduction; the effective branching factor drops again. ~40-70 Elo combined, but
+tune the margins carefully - too greedy and tactics start getting missed
+(guard with the existing mate tests plus a WAC/ECM tactical suite).
 
-## 4. Correct draw, repetition and mate scoring
+## 3. Static Exchange Evaluation (SEE)
 
-- Detect threefold repetition and the 50-move rule *inside* the search tree
-  (`board.is_repetition(3)`, `board.halfmove_clock`), not just the automatic
-  five-fold / seventy-five-move draws in `is_drawn`.
-- Score every draw a flat `0` (currently negamax returns `0 - depth`), with an
-  optional small contempt value.
-- Store mate scores in the TT as distance-to-mate relative to the current ply
-  (`score +/- ply` on store/probe) so `MATE_GUARD` can be removed and mate
-  cut-offs actually propagate. This fixes real half-point losses and lets the
-  engine convert forced mates faster.
+A `see(board, move) -> int` that plays out the capture sequence on one square
+with the cheapest attacker each time. Two uses:
 
-## 5. Evaluation upgrade
+- **Move ordering**: order captures with `SEE < 0` *after* the quiet killers
+  instead of just behind winning captures - `MoveOrderer` currently trusts
+  MVV-LVA, which mis-ranks a queen grabbing a defended pawn.
+- **Quiescence pruning**: in `Negamax.quiesce`, skip captures with `SEE < 0`
+  entirely instead of searching every capture.
 
-PeSTO piece-square tables capture a lot of positional understanding but miss
-king safety and pawn structure, which is where a mid-level engine gains most.
-Add, keeping the incremental accumulator where possible and a pawn-hash cache
-for the rest:
+python-chess gives `board.attackers(color, square)` to build the attacker
+lists. ~25-50 Elo, and it makes quiescence much cheaper.
 
-- King safety: attacker count / attack weight on the squares around the king,
-  pawn-shield intactness, open files next to the king.
-- Passed pawns (bonus scaled by rank and king distance), isolated / doubled /
-  backward pawns.
-- Bishop pair, rook on open / half-open file, knight outposts.
-- Tempo bonus.
+## 4. Search extensions
 
-Then wire in [Syzygy endgame tablebases](https://python-chess.readthedocs.io/en/latest/syzygy.html)
-(`chess.syzygy`) for perfect play with <= 6 pieces.
+Spend an extra ply where the tree is forcing so tactics are not missed at the
+horizon:
 
----
+- **Check extension**: `depth += 1` when the move gives check (cap total
+  extensions per line so it can't blow up).
+- **One-reply extension**: extend when the side to move has a single legal
+  move.
+- Later: **singular extensions** (re-search to prove the TT move is the only
+  good one) - higher effort, do it after PVS/LMR are stable.
 
-## Recently completed
+~15-25 Elo for the cheap two; more with singular.
 
-From the previous review passes: move ordering, transposition table, iterative
-deepening + UCI time management, perft fix + tests, quiescence rewrite (bounded,
-check-aware, fail-soft), tapered PeSTO evaluation with an incremental
-accumulator, standard `info` output, resource-leak fixes, Lazy SMP with a
-lock-free shared-memory TT (now the only search path - `go` always runs it), and
-a rebuild of the search as composed collaborators (`Negamax` holds an evaluator
-/ move orderer / TT / clock) instead of a mixin stack, with unit tests for each
-piece.
+## 5. Evaluation tuning harness (Texel's method)
 
-Packaging & tooling: `src/pychess/` package layout, `pyproject.toml` (replacing
-`requirements.txt` / `pytest.ini`), a `pychess` console entry point, Apache-2.0
-license, `py.typed`, and Ruff (lint + format) + Mypy + pytest-cov (85% gate) in
-CI, with `pre-commit` mirroring it locally.
+The PeSTO tables and the new `eval_terms` weights are untuned for this engine.
+Add `tools/tune.py`: label a few hundred thousand quiet positions with the game
+result (from self-play PGNs or a public dataset), then fit every weight by
+minimising the logistic error between `sigmoid(eval)` and the result. Keep the
+weights in one place so the tuner can rewrite them. Unlocks the eval terms
+already added and makes every future term measurable. ~30-100 Elo depending on
+how untuned things currently are; the highest-ceiling item on this list.
+
+### Also worth doing
+
+- **Syzygy tablebases** (`chess.syzygy`): probe WDL/DTZ for <= 6 pieces at the
+  root and in the search for perfect endgame play. Needs a `SyzygyPath` and the
+  tablebase files (~150 GB for 6-man), so gate it on config and no-op when the
+  files are absent.
+- **UCI `setoption`**: `Hash`, `Threads`, `Contempt`, `SyzygyPath`,
+  `MultiPV` - currently parsed and ignored.
+- **2-fold repetition as a draw inside the search** (not just 3-fold): a
+  position seen twice within the tree is almost always a forced draw; detecting
+  it a repetition earlier saves nodes.
 
 ## Housekeeping
 
@@ -85,7 +87,6 @@ CI, with `pre-commit` mirroring it locally.
 
 - [ ] Rename the repo `pyChess` -> `pychess` so it matches the package name;
       update the local remote afterwards.
-- [ ] Tag `v0.1.0` and cut a **GitHub Release** from the `CHANGELOG.md` entry.
 
 ### Opening book (`opening_book/bookfish.bin`)
 
