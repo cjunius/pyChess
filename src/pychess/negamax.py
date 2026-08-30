@@ -69,7 +69,7 @@ class Negamax:
             if board.is_checkmate():
                 return -MATE - depth, []
             if is_drawn(board):
-                return -depth, []
+                return 0, []
             return self.quiesce(board, alpha, beta, 0), []
 
         alpha_orig = alpha
