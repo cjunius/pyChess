@@ -1,0 +1,35 @@
+name: Bug report
+description: Something the engine does wrong or a crash.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected vs. what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: >
+        The UCI commands you sent, or a FEN and `go` limits. A full transcript
+        (`position ... / go ...` and the engine's output) is ideal.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Output of `pip show pychess` or the commit SHA.
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version and OS
+      placeholder: "3.12 on macOS 14 / 3.13 on Ubuntu 24.04"
+    validations:
+      required: true

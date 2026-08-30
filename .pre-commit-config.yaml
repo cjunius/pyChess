@@ -1,0 +1,19 @@
+# Install once with:  pre-commit install
+# Keeps the same checks as CI. Keep the revs below in step with the dev pins in
+# pyproject.toml (run `pre-commit autoupdate` and bump pyproject together).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        pass_filenames: false
+        additional_dependencies:
+          - chess==1.10.0
+          - pytest==9.0.3
