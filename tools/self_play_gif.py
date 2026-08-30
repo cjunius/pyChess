@@ -80,14 +80,15 @@ def _material_note(board: chess.Board) -> str:
     mag = abs(diff)
     if mag < 2:
         return ""
-    if mag == 2:
-        return ", up two pawns"
-    if mag < 5:
-        return ", up a piece"
-    if mag < 8:
-        return ", up a rook"
-    return ", up a queen"
 
+    side = "White" if diff > 0 else "Black"
+    if mag == 2:
+        return f", {side} up two pawns"
+    if mag < 5:
+        return f", {side} up a piece"
+    if mag < 8:
+        return f", {side} up a rook"
+    return f", {side} up a queen"
 
 def _render(title: str, subtitle: str, board: chess.Board) -> Image.Image:
     img = Image.new("RGB", (WIDTH, HEIGHT), BG)
