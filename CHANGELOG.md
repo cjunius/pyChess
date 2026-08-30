@@ -6,6 +6,10 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-30
+
+Initial release.
+
 ### Added
 
 - Lazy SMP parallel search: one iterative-deepening worker per core sharing a
@@ -42,3 +46,6 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The single-process search path; `go` always runs Lazy SMP.
 - Legacy `archive/` tree and unused evaluation mixins.
+
+[Unreleased]: https://github.com/cjunius/pyChess/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/cjunius/pyChess/releases/tag/v0.1.0
