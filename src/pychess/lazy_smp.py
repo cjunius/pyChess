@@ -14,7 +14,7 @@ from typing import NamedTuple
 
 import chess
 
-from .clock import DEFAULT_MOVETIME, MAX_DEPTH, Clock, deadline_from_limits
+from .clock import MAX_DEPTH, Clock, deadline_from_limits
 from .constants import INF, MATE_IN_MAX
 from .eval_board import EvalBoard
 from .evaluation import PestoEvaluator
