@@ -47,10 +47,11 @@ search would face with no alpha-beta at all. `pruned` is `1 - nodes/perft`.
 | 8 | 3.690s | 178,647 | 84,998,978,956 | 99.9998% |
 
 The `pruned` column is an *estimate*: the two counts aren't the same unit.
-"nodes" is every `board.push` in the pruned tree (internal nodes and quiescence
-included, and quiescence looks past `depth` in forcing lines); `perft` is only
-the leaves at exactly `depth`. So it overstates pruning a little at shallow
-depths and understates it once quiescence dominates - but the trend is real:
+"nodes" counts every node the search visits in the pruned tree (internal nodes
+and quiescence included, and quiescence looks past `depth` in forcing lines);
+`perft` is only the leaves at exactly `depth`. So it overstates pruning a little
+at shallow depths and understates it once quiescence dominates - but the trend
+is real:
 move ordering, the TT, and the reductions (null-move, LMR, PVS) take the tree
 from "search half of it" to "search one node in ~475,000" by depth 8.
 
