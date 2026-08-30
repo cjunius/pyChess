@@ -3,7 +3,7 @@
 ## Setup
 
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate
+python3.14 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pre-commit install
 ```

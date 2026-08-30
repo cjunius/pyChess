@@ -71,7 +71,7 @@ class EvalBoard(chess.Board):
 
     # -- copying ----------------------------------------------------------
 
-    def copy(self, *, stack: bool | int = True) -> "EvalBoard":
+    def copy(self, *, stack: bool | int = True) -> EvalBoard:
         board = super().copy(stack=stack)
         board._mg, board._eg, board._phase = self._mg, self._eg, self._phase
         board._eval_stack = list(self._eval_stack) if stack else []

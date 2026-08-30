@@ -1,7 +1,7 @@
 # Agent guide
 
 `pychess` is a UCI chess engine: Lazy SMP negamax with a tapered PeSTO
-evaluation. `src/` layout, Python 3.12+.
+evaluation. `src/` layout, Python 3.14+.
 
 ## Commands
 
@@ -15,7 +15,7 @@ pytest                    # tests + coverage; gate is 85%
 ```
 
 All tool config lives in `pyproject.toml`. CI (`.github/workflows/ci.yml`) runs
-exactly these on 3.12 and 3.13; `pre-commit` mirrors lint/format/type locally.
+exactly these on 3.14; `pre-commit` mirrors lint/format/type locally.
 
 Skills in `.claude/skills/`: `/pr-check`, `/update-docs`, `/bench`, `/release`.
 

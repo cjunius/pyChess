@@ -1,7 +1,7 @@
 # pychess
 
 [![ci](https://github.com/cjunius/pyChess/actions/workflows/ci.yml/badge.svg)](https://github.com/cjunius/pyChess/actions/workflows/ci.yml)
-[![python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue)](pyproject.toml)
+[![python](https://img.shields.io/badge/python-3.14-blue)](pyproject.toml)
 [![codecov](https://codecov.io/gh/cjunius/pyChess/branch/main/graph/badge.svg)](https://codecov.io/gh/cjunius/pyChess)
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -34,7 +34,7 @@ rating; [docs/performance.md](docs/performance.md) for search-speed benchmarks.
 
 ## Quick start
 
-Requires Python 3.12+.
+Requires Python 3.14+.
 
 ```bash
 git clone https://github.com/cjunius/pyChess.git
@@ -98,7 +98,7 @@ pytest                   # tests + coverage (gate: 85%)
 ```
 
 CI (`.github/workflows/ci.yml`) runs lint + format + type-check once and the
-test suite on Python 3.12 and 3.13. All tool config lives in `pyproject.toml`.
+test suite on Python 3.14. All tool config lives in `pyproject.toml`.
 
 ## License
 
