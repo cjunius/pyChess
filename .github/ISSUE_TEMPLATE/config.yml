@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/cjunius/pyChess/discussions
+    about: Ask usage questions or propose ideas here.
+  - name: Security vulnerability
+    url: https://github.com/cjunius/pyChess/security/advisories/new
+    about: Report security issues privately, not as a public issue.

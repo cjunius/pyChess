@@ -1,0 +1,26 @@
+name: Feature request
+description: A search / evaluation technique or a usability improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should the engine do, and roughly how?
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: >
+        Expected benefit - Elo, speed, ergonomics. Link the relevant
+        Chess Programming Wiki page if there is one.
+    validations:
+      required: false
+  - type: checkboxes
+    id: roadmap
+    attributes:
+      label: Roadmap
+      options:
+        - label: I checked [docs/tasks.md](../blob/main/docs/tasks.md) and this isn't already listed.

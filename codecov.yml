@@ -1,0 +1,18 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto        # never drop below the current level
+        threshold: 1%
+    patch:
+      default:
+        target: 85%         # new/changed lines must be 85% covered
+
+comment:
+  layout: "condensed_header, diff, files"
+  require_changes: true      # only comment when coverage moves
+
+# Both matrix jobs upload; treat them as one combined report.
+flag_management:
+  default_rules:
+    carryforward: true
