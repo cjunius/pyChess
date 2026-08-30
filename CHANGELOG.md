@@ -19,13 +19,13 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packaging: `src/pychess/` layout, `pyproject.toml`, `pychess` console script,
   `py.typed`.
 - Tooling: Ruff (lint + format), Mypy, pytest-cov (85% gate), `pre-commit`, all
-  run in CI on Python 3.12 and 3.13, with Codecov coverage + test-analytics
-  uploads.
+  run in CI, with Codecov coverage + test-analytics uploads.
 - `perft` regression tests against published node counts; unit tests for every
   module.
 
 ### Changed
 
+- Require Python 3.14 (`requires-python = ">=3.14"`); CI runs on 3.14 only.
 - Search rebuilt as composed collaborators (`Negamax` is handed an evaluator,
   move orderer, TT, and clock) instead of a cooperative-multiple-inheritance
   mixin stack.

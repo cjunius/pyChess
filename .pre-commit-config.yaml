@@ -3,17 +3,17 @@
 # pyproject.toml (run `pre-commit autoupdate` and bump pyproject together).
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.4
+    rev: v0.16.4
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+    rev: v2.3.1
     hooks:
       - id: mypy
         pass_filenames: false
         additional_dependencies:
-          - chess==1.10.0
-          - pytest==9.0.3
+          - chess==1.11.2
+          - pytest==9.1.1

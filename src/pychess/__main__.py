@@ -117,7 +117,7 @@ class UCI:
         try:
             with polyglot.MemoryMappedReader(BOOK_PATH) as reader:
                 return reader.weighted_choice(self.board).move
-        except (IndexError, FileNotFoundError, OSError):
+        except IndexError, FileNotFoundError, OSError:
             return None
 
     def print_info(self, result: SearchResult) -> None:
