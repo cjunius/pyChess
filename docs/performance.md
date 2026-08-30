@@ -3,8 +3,8 @@
 Fresh benchmark of the current engine (move ordering, TT, bounded quiescence,
 null-move pruning, LMR, PVS, mate-distance pruning, hand-crafted eval terms) on
 one machine: Apple Silicon, 10 cores, Python 3.14. Search is from the starting
-position; rows stop once a search passes ~5 seconds. "Nodes" is `board.push`
-calls (main search + quiescence).
+position; rows stop once a search passes ~5 seconds. "Nodes" is the engine's
+node counter (number of `Negamax.search` / `Negamax.quiesce` calls).
 
 ## What `go` / `go depth N` runs today: Lazy SMP from the start position
 
