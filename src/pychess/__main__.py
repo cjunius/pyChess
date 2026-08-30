@@ -35,7 +35,9 @@ class UCI:
         self.depth = 4
 
     def process_command(self, line: str) -> None:
-        args = line.split(" ")
+        args = line.strip().split()
+        if not args:
+            return
         match args[0]:
             case "uci":
                 print(f"id name pychess {__version__}")
