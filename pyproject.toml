@@ -26,7 +26,7 @@ dependencies = ["chess==1.11.2"]
 dev = [
     "pytest==9.1.1",
     "pytest-cov>=7.1.0",
-    "ruff==0.16.4",
+    "ruff==0.16.5",
     "mypy==2.3.1",
     "pre-commit>=4.6.2",
 ]
